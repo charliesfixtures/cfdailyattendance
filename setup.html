@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CF Daily Attendance — Token Setup</title>
-  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  <title>CF Daily Attendance — Setup</title>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -17,34 +16,37 @@
     }
     .card {
       background: #1a1d27; border: 1px solid #2a2d3e;
-      border-radius: 14px; padding: 28px; width: 100%; max-width: 420px;
+      border-radius: 14px; padding: 28px;
+      width: 100%; max-width: 420px; display: flex;
+      flex-direction: column; gap: 16px;
     }
-    .logo { font-size: 36px; text-align: center; margin-bottom: 8px; }
-    h2 { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 6px; }
-    .subtitle { font-size: 12px; color: #64748b; text-align: center; margin-bottom: 24px; line-height: 1.6; }
+    .logo { font-size: 36px; text-align: center; }
+    h2 { font-size: 18px; font-weight: 700; text-align: center; }
+    .subtitle { font-size: 12px; color: #64748b; text-align: center; line-height: 1.6; }
 
     .step {
       background: #0f1117; border: 1px solid #2a2d3e;
-      border-radius: 10px; padding: 14px; margin-bottom: 12px;
+      border-radius: 10px; padding: 14px;
+    }
+    .step-header {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; margin-bottom: 8px;
     }
     .step-num {
-      display: inline-block; width: 22px; height: 22px;
-      background: #4f8ef7; border-radius: 50%;
-      font-size: 11px; font-weight: 700; text-align: center;
-      line-height: 22px; margin-right: 8px; flex-shrink: 0;
+      width: 22px; height: 22px; background: #4f8ef7;
+      border-radius: 50%; font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
     }
-    .step-header { display: flex; align-items: center; margin-bottom: 8px; font-size: 13px; font-weight: 600; }
-    .step p { font-size: 12px; color: #94a3b8; line-height: 1.6; margin-left: 30px; }
-    .step a { color: #4f8ef7; text-decoration: none; }
-    .step a:hover { text-decoration: underline; }
+    .step p { font-size: 12px; color: #94a3b8; line-height: 1.6; }
+    .step a { color: #4f8ef7; }
 
     textarea {
       width: 100%; padding: 12px; border-radius: 8px;
       border: 1px solid #2a2d3e; background: #0f1117;
       color: #e2e8f0; font-family: 'DM Mono', monospace;
       font-size: 12px; resize: none; height: 80px;
-      margin-top: 10px; margin-left: 0; display: block;
-      transition: border-color 0.2s;
+      margin-top: 10px; transition: border-color 0.2s;
     }
     textarea:focus { outline: none; border-color: #4f8ef7; }
     textarea::placeholder { color: #374151; }
@@ -54,149 +56,99 @@
       color: #fff; border: none; border-radius: 10px;
       font-family: 'Sora', sans-serif; font-size: 14px;
       font-weight: 700; cursor: pointer; transition: all 0.2s;
-      margin-top: 4px;
     }
-    .btn:hover { opacity: 0.88; transform: translateY(-1px); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn:hover { opacity: 0.88; }
 
-    .msg {
-      text-align: center; font-size: 13px; font-family: 'DM Mono', monospace;
-      min-height: 20px; margin-top: 12px;
+    /* Success screen */
+    .success {
+      display: none; flex-direction: column;
+      align-items: center; gap: 12px; text-align: center;
     }
-    .msg.ok    { color: #10b981; }
-    .msg.error { color: #ef4444; }
-    .msg.info  { color: #64748b; }
-
-    .success-box {
+    .success .big { font-size: 52px; }
+    .success h3 { font-size: 18px; font-weight: 700; color: #10b981; }
+    .success p { font-size: 13px; color: #6ee7b7; line-height: 1.7; }
+    .success .next {
       background: #052e16; border: 1px solid #10b981;
-      border-radius: 10px; padding: 20px; text-align: center;
-      display: none;
+      border-radius: 10px; padding: 16px; width: 100%;
+      font-size: 12px; color: #6ee7b7; line-height: 1.8; text-align: left;
     }
-    .success-box .icon { font-size: 40px; margin-bottom: 8px; }
-    .success-box h3 { color: #10b981; font-size: 16px; margin-bottom: 6px; }
-    .success-box p { font-size: 12px; color: #6ee7b7; line-height: 1.6; }
+    .success .next strong { color: #10b981; display: block; margin-bottom: 4px; }
   </style>
 </head>
 <body>
-
 <div class="card">
-  <div class="logo">📋</div>
-  <h2>CF Daily Attendance Setup</h2>
-  <p class="subtitle">One-time token setup to connect your Trello account to the Power-Up.</p>
 
-  <!-- Step 1 -->
-  <div class="step">
-    <div class="step-header">
-      <span class="step-num">1</span>
-      Get your Trello token
+  <!-- Setup form -->
+  <div id="setupForm" style="display:flex;flex-direction:column;gap:16px">
+    <div class="logo">📋</div>
+    <h2>CF Daily Attendance Setup</h2>
+    <p class="subtitle">One-time setup to connect your Trello account. Takes about 30 seconds.</p>
+
+    <div class="step">
+      <div class="step-header"><div class="step-num">1</div> Get your Trello token</div>
+      <p>
+        Click this link — it opens Trello's authorization page:<br/><br/>
+        <a href="https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&key=53abc1f4686798eadbeb8f91ea79c9bb&name=CF+Daily+Attendance" target="_blank">
+          → Open Trello Authorization →
+        </a><br/><br/>
+        Click <strong>Allow</strong>, then <strong>select all and copy</strong> the token string it shows you.
+      </p>
     </div>
-    <p>
-      Click this link to authorize and get your token:<br/><br/>
-      <a href="https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&key=53abc1f4686798eadbeb8f91ea79c9bb&name=CF+Daily+Attendance" target="_blank">
-        → Open Trello Authorization Page
-      </a><br/><br/>
-      After clicking <strong>Allow</strong>, Trello shows you a long token string. Copy the entire thing.
-    </p>
-  </div>
 
-  <!-- Step 2 -->
-  <div class="step">
-    <div class="step-header">
-      <span class="step-num">2</span>
-      Paste your token below
+    <div class="step">
+      <div class="step-header"><div class="step-num">2</div> Paste your token here</div>
+      <p>Paste the token you just copied:</p>
+      <textarea id="tokenInput" placeholder="Paste token here (long string starting with ATTA...)"></textarea>
     </div>
-    <p>Paste the token you copied from Step 1:</p>
-    <textarea id="tokenInput" placeholder="Paste your token here (e.g. ATTA7ee373...)"></textarea>
-  </div>
 
-  <!-- Step 3 -->
-  <div class="step">
-    <div class="step-header">
-      <span class="step-num">3</span>
-      Save &amp; done!
+    <div class="step">
+      <div class="step-header"><div class="step-num">3</div> Save it</div>
+      <p>Click the button below. Then go back to Trello and click the Attendance button on any card.</p>
     </div>
-    <p>Click below to store the token. You only need to do this once per browser.</p>
+
+    <button class="btn" onclick="saveToken()">💾 Save Token</button>
   </div>
 
-  <button class="btn" onclick="saveToken()" id="saveBtn">💾 Save Token &amp; Activate</button>
-  <div class="msg info" id="msg">Paste your token above to get started.</div>
-
-  <!-- Success state -->
-  <div class="success-box" id="successBox">
-    <div class="icon">✅</div>
-    <h3>You're all set!</h3>
-    <p>Your token has been saved. You can now close this tab and use the <strong>CF Daily Attendance</strong> Power-Up on your Trello board.</p>
+  <!-- Success screen -->
+  <div class="success" id="successScreen">
+    <div class="big">✅</div>
+    <h3>Token Saved!</h3>
+    <p>Your token is stored. Now go back to Trello and open the Power-Up.</p>
+    <div class="next">
+      <strong>Next steps:</strong>
+      1. Go to your Trello board<br/>
+      2. Press <strong>Ctrl + Shift + R</strong> to hard refresh<br/>
+      3. Click <strong>Attendance</strong> in the top bar<br/>
+      4. Your employee list should appear! 🎉
+    </div>
   </div>
+
 </div>
 
 <script>
-  var TRELLO_API_KEY = '53abc1f4686798eadbeb8f91ea79c9bb';
-
-  // Try to init as iframe (works if opened from Trello popup)
-  // Falls back to localStorage if opened as standalone tab
-  var t = null;
-  try {
-    t = window.TrelloPowerUp.iframe({
-      appKey:  TRELLO_API_KEY,
-      appName: 'CF Daily Attendance',
-    });
-  } catch(e) {
-    console.log('Running in standalone mode');
-  }
-
   function saveToken() {
     var token = document.getElementById('tokenInput').value.trim();
-    var btn   = document.getElementById('saveBtn');
-    var msg   = document.getElementById('msg');
 
     if (!token) {
-      showMsg('Please paste your token first.', 'error');
+      alert('Please paste your token first.');
       return;
     }
     if (token.length < 40) {
-      showMsg('That token looks too short. Make sure you copied the whole thing.', 'error');
+      alert('That token looks too short — make sure you copied the whole thing.');
       return;
     }
 
-    btn.disabled = true;
-    btn.textContent = 'Saving...';
-    showMsg('Storing token...', 'info');
+    // Save to localStorage — index.html picks this up when it loads inside Trello
+    localStorage.setItem('trello_attendance_token', token);
 
-    if (t) {
-      // Inside Trello popup — store in Power-Up storage
-      t.set('member', 'private', 'token', token)
-        .then(function() {
-          onSuccess();
-        })
-        .catch(function(err) {
-          // Fallback to localStorage
-          localStorage.setItem('trello_attendance_token', token);
-          onSuccess();
-        });
+    // Confirm it saved
+    var saved = localStorage.getItem('trello_attendance_token');
+    if (saved && saved === token) {
+      document.getElementById('setupForm').style.display = 'none';
+      document.getElementById('successScreen').style.display = 'flex';
     } else {
-      // Standalone tab — store in localStorage as fallback
-      localStorage.setItem('trello_attendance_token', token);
-      onSuccess();
+      alert('Something went wrong saving the token. Please try a different browser.');
     }
-  }
-
-  function onSuccess() {
-    document.getElementById('msg').style.display = 'none';
-    document.getElementById('saveBtn').style.display = 'none';
-    document.getElementById('successBox').style.display = 'block';
-
-    // If inside popup, close after 2 seconds
-    if (t) {
-      setTimeout(function() {
-        try { t.closePopup(); } catch(e) {}
-      }, 2000);
-    }
-  }
-
-  function showMsg(text, type) {
-    var el = document.getElementById('msg');
-    el.textContent = text;
-    el.className = 'msg ' + (type || 'info');
   }
 </script>
 </body>
