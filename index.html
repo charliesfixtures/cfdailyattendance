@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daily Attendance</title>
+  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3e;
+      --accent: #4f8ef7;
+      --late: #f59e0b;
+      --absent: #ef4444;
+      --sick: #a855f7;
+      --vacation: #10b981;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
+    }
+    .header-icon {
+      width: 34px; height: 34px; background: var(--accent);
+      border-radius: 8px; display: flex; align-items: center;
+      justify-content: center; font-size: 17px; flex-shrink: 0;
+    }
+    .header-title { font-size: 15px; font-weight: 700; }
+    .header-date  { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .header-refresh {
+      margin-left: auto; background: transparent; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 6px; padding: 4px 10px;
+      font-size: 11px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.2s;
+    }
+    .header-refresh:hover { border-color: var(--accent); color: var(--accent); }
+
+    .state-box {
+      text-align: center; padding: 32px 16px;
+      font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted); line-height: 1.7;
+    }
+    .state-box.error { color: var(--absent); }
+    .state-box .hint { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .auth-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; text-align: center; margin-top: 20px;
+    }
+    .auth-box p { font-size: 13px; color: var(--muted); margin-bottom: 14px; line-height: 1.6; }
+
+    .legend { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    .legend-item {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace;
+    }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    .emp-count {
+      font-size: 11px; color: var(--muted);
+      font-family: 'DM Mono', monospace; margin-bottom: 10px; text-align: right;
+    }
+
+    .employee-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+
+    .employee-row {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 10px 12px;
+      display: flex; align-items: center; gap: 10px; transition: border-color 0.2s;
+      animation: fadeIn 0.2s ease both;
+    }
+    .employee-row.status-L { border-color: var(--late); }
+    .employee-row.status-A { border-color: var(--absent); }
+    .employee-row.status-S { border-color: var(--sick); }
+    .employee-row.status-V { border-color: var(--vacation); }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .employee-row:nth-child(1)  { animation-delay: 0.02s; }
+    .employee-row:nth-child(2)  { animation-delay: 0.04s; }
+    .employee-row:nth-child(3)  { animation-delay: 0.06s; }
+    .employee-row:nth-child(4)  { animation-delay: 0.08s; }
+    .employee-row:nth-child(5)  { animation-delay: 0.10s; }
+    .employee-row:nth-child(6)  { animation-delay: 0.12s; }
+    .employee-row:nth-child(7)  { animation-delay: 0.14s; }
+    .employee-row:nth-child(8)  { animation-delay: 0.16s; }
+    .employee-row:nth-child(9)  { animation-delay: 0.18s; }
+    .employee-row:nth-child(10) { animation-delay: 0.20s; }
+
+    .employee-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--border); display: flex; align-items: center;
+      justify-content: center; font-size: 12px; font-weight: 600;
+      flex-shrink: 0; font-family: 'DM Mono', monospace;
+    }
+    .employee-name {
+      font-size: 13px; font-weight: 600; flex: 1;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .status-buttons { display: flex; gap: 3px; flex-shrink: 0; }
+
+    .status-btn {
+      padding: 3px 8px; border-radius: 5px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); font-size: 10px;
+      font-family: 'DM Mono', monospace; font-weight: 500;
+      cursor: pointer; transition: all 0.15s; letter-spacing: 0.3px;
+    }
+    .status-btn.active-L { background: var(--late);    border-color: var(--late);    color: #000; }
+    .status-btn.active-A { background: var(--absent);  border-color: var(--absent);  color: #fff; }
+    .status-btn.active-S { background: var(--sick);    border-color: var(--sick);    color: #fff; }
+    .status-btn.active-V { background: var(--vacation);border-color: var(--vacation);color: #000; }
+    .status-btn[data-s="L"]:hover:not(.active-L) { background: var(--late);    border-color: var(--late);    color: #000; }
+    .status-btn[data-s="A"]:hover:not(.active-A) { background: var(--absent);  border-color: var(--absent);  color: #fff; }
+    .status-btn[data-s="S"]:hover:not(.active-S) { background: var(--sick);    border-color: var(--sick);    color: #fff; }
+    .status-btn[data-s="V"]:hover:not(.active-V) { background: var(--vacation);border-color: var(--vacation);color: #000; }
+
+    .summary-bar {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 10px 14px;
+      margin-bottom: 12px; display: flex; gap: 12px; flex-wrap: wrap;
+    }
+    .summary-stat { display: flex; align-items: center; gap: 5px; font-size: 11px; font-family: 'DM Mono', monospace; }
+    .summary-count { font-size: 17px; font-weight: 700; }
+    .summary-label { color: var(--muted); }
+
+    .actions { display: flex; gap: 8px; }
+
+    .btn-submit {
+      flex: 1; padding: 11px; background: var(--accent); color: #fff;
+      border: none; border-radius: var(--radius);
+      font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .btn-secondary {
+      padding: 11px 14px; background: transparent; color: var(--muted);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      font-family: 'Sora', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-secondary:hover { border-color: var(--muted); color: var(--text); }
+
+    .status-msg {
+      text-align: center; font-size: 12px; font-family: 'DM Mono', monospace;
+      margin-top: 10px; min-height: 18px; color: var(--vacation);
+    }
+    .status-msg.error { color: var(--absent); }
+  </style>
+</head>
+<body>
+<div id="app"><div class="state-box"><div class="spinner"></div>Initializing...</div></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════
+const CONFIG = {
+  TRELLO_API_KEY:     '53abc1f4686798eadbeb8f91ea79c9bb',
+  LOG_BOARD_ID:       '6965633f4fe5254c47e38527',
+  SLACK_WEBHOOK:      'SLACK_WEBHOOK_PLACEHOLDER',  // injected at deploy time — never hardcoded
+  EMPLOYEE_LIST_NAME: '2026 Employee',  // exact name of the list on your hidden board
+};
+
+// ═══════════════════════════════════════════════════════════
+//  Constants
+// ═══════════════════════════════════════════════════════════
+const STATUS_MAP = {
+  L: { label: 'Late',     full: 'Late',     emoji: '🕐' },
+  A: { label: 'Absent',   full: 'Absent',   emoji: '❌' },
+  S: { label: 'Sick',     full: 'Sick',     emoji: '🤒' },
+  V: { label: 'Vacation', full: 'Vacation', emoji: '🌴' },
+};
+
+function todayFormatted() {
+  return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function currentYear() { return new Date().getFullYear().toString(); }
+
+// ═══════════════════════════════════════════════════════════
+//  App State
+// ═══════════════════════════════════════════════════════════
+let t            = null;   // Trello iframe context
+let trelloToken  = null;
+let employees    = [];     // string[]  — loaded from hidden board
+let attendance   = {};     // { name: 'L'|'A'|'S'|'V'|null }
+
+// ═══════════════════════════════════════════════════════════
+//  Trello API helper
+// ═══════════════════════════════════════════════════════════
+async function api(path, method = 'GET', body = null) {
+  const sep = path.includes('?') ? '&' : '?';
+  const url = `https://api.trello.com/1${path}${sep}key=${CONFIG.TRELLO_API_KEY}&token=${trelloToken}`;
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  if (!res.ok) throw new Error(`Trello ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Load employees from "2026 Employee" list
+// ═══════════════════════════════════════════════════════════
+async function loadEmployees() {
+  setLoading('Fetching employee list from Trello...');
+  const lists = await api(`/boards/${CONFIG.LOG_BOARD_ID}/lists`);
+  const empList = lists.find(l => l.name.trim().toLowerCase() === CONFIG.EMPLOYEE_LIST_NAME.toLowerCase());
+
+  if (!empList) throw new Error(
+    `Could not find a list named "${CONFIG.EMPLOYEE_LIST_NAME}" on your hidden board.\n` +
+    `Go to your hidden board → create a list called exactly "${CONFIG.EMPLOYEE_LIST_NAME}" → add one card per employee.`
+  );
+
+  const cards = await api(`/lists/${empList.id}/cards`);
+  if (!cards.length) throw new Error(
+    `The "${CONFIG.EMPLOYEE_LIST_NAME}" list has no cards.\n` +
+    `Add one card per employee (the card title = the employee name).`
+  );
+
+  employees = cards.map(c => c.name.trim()).filter(Boolean).sort((a,b) => a.localeCompare(b));
+  attendance = {};
+  employees.forEach(n => attendance[n] = null);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UI helpers
+// ═══════════════════════════════════════════════════════════
+function setLoading(msg) {
+  document.getElementById('app').innerHTML =
+    `<div class="state-box"><div class="spinner"></div>${msg}</div>`;
+}
+
+function setError(msg) {
+  document.getElementById('app').innerHTML =
+    `<div class="state-box error">⚠️ ${msg.replace(/\n/g, '<br/>')}</div>
+     <div style="text-align:center;margin-top:12px">
+       <button class="btn-secondary" onclick="init()">↺ Retry</button>
+     </div>`;
+}
+
+function setAuthScreen() {
+  document.getElementById('app').innerHTML = `
+    <div class="header">
+      <div class="header-icon">📋</div>
+      <div><div class="header-title">Daily Attendance</div><div class="header-date">${todayFormatted()}</div></div>
+    </div>
+    <div class="auth-box">
+      <p>This Power-Up needs one-time permission to read and write Trello cards on your behalf.</p>
+      <button class="btn-submit" style="max-width:200px" onclick="doAuthorize()">🔐 Authorize</button>
+    </div>`;
+}
+
+function render() {
+  const TODAY = todayFormatted();
+  const counts = { present:0, L:0, A:0, S:0, V:0 };
+  employees.forEach(n => { const s = attendance[n]; if(s) counts[s]++; else counts.present++; });
+
+  document.getElementById('app').innerHTML = `
+    <div class="header">
+      <div class="header-icon">📋</div>
+      <div><div class="header-title">Daily Attendance</div><div class="header-date">${TODAY}</div></div>
+      <button class="header-refresh" onclick="refreshList()" title="Reload employee list">↺ Refresh</button>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#4f8ef7"></div>Present</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Late</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Absent</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#a855f7"></div>Sick</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>Vacation</div>
+    </div>
+
+    <div class="emp-count">${employees.length} employees · from "${CONFIG.EMPLOYEE_LIST_NAME}"</div>
+
+    <div class="employee-list">
+      ${employees.map((name, i) => {
+        const s = attendance[name];
+        const initials = name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+        const idx = i + 1;
+        return `
+        <div class="employee-row${s ? ' status-'+s : ''}" style="animation-delay:${idx*0.03}s">
+          <div class="employee-avatar">${initials}</div>
+          <div class="employee-name">${name}</div>
+          <div class="status-buttons">
+            ${Object.entries(STATUS_MAP).map(([k,v]) =>
+              `<button class="status-btn${s===k ? ' active-'+k : ''}" data-s="${k}"
+                onclick="toggle(${JSON.stringify(name)},${JSON.stringify(k)})">${v.label}</button>`
+            ).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="summary-bar">
+      <div class="summary-stat"><span class="summary-count" style="color:#4f8ef7">${counts.present}</span><span class="summary-label">Present</span></div>
+      <div class="summary-stat"><span class="summary-count" style="color:#f59e0b">${counts.L}</span><span class="summary-label">Late</span></div>
+      <div class="summary-stat"><span class="summary-count" style="color:#ef4444">${counts.A}</span><span class="summary-label">Absent</span></div>
+      <div class="summary-stat"><span class="summary-count" style="color:#a855f7">${counts.S}</span><span class="summary-label">Sick</span></div>
+      <div class="summary-stat"><span class="summary-count" style="color:#10b981">${counts.V}</span><span class="summary-label">Vacation</span></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-secondary" onclick="resetAll()">Reset</button>
+      <button class="btn-submit" onclick="submit()" id="submitBtn">✓ Submit Attendance</button>
+    </div>
+    <div class="status-msg" id="statusMsg"></div>
+  `;
+
+  if (t) t.sizeTo('#app').catch(()=>{});
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Interactions
+// ═══════════════════════════════════════════════════════════
+function toggle(name, status) {
+  attendance[name] = attendance[name] === status ? null : status;
+  render();
+}
+function resetAll() { employees.forEach(n => attendance[n] = null); render(); }
+async function refreshList() {
+  try { await loadEmployees(); render(); } catch(e) { setError(e.message); }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Submit
+// ═══════════════════════════════════════════════════════════
+async function submit() {
+  const btn = document.getElementById('submitBtn');
+  const msg = document.getElementById('statusMsg');
+  btn.disabled = true; msg.textContent = ''; msg.className = 'status-msg';
+
+  try {
+    const logListId = await getOrCreateLogList();
+    const flagged   = employees.filter(n => attendance[n]);
+
+    for (const name of flagged) {
+      btn.textContent = `Logging ${name}...`;
+      await logEmployee(logListId, name, attendance[name]);
+    }
+
+    btn.textContent = 'Notifying Slack...';
+    await sendSlack();
+
+    msg.textContent = `✓ Done! ${flagged.length} employee(s) logged. Slack notified.`;
+  } catch(e) {
+    console.error(e);
+    msg.textContent = '✗ ' + e.message;
+    msg.className = 'status-msg error';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✓ Submit Attendance';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Trello log helpers
+// ═══════════════════════════════════════════════════════════
+async function getOrCreateLogList() {
+  const YEAR  = currentYear();
+  const lists = await api(`/boards/${CONFIG.LOG_BOARD_ID}/lists`);
+  let list = lists.find(l => l.name === YEAR);
+  if (!list) list = await api('/lists', 'POST', { name: YEAR, idBoard: CONFIG.LOG_BOARD_ID });
+  return list.id;
+}
+
+async function logEmployee(logListId, name, statusKey) {
+  const TODAY = todayFormatted();
+  const cards = await api(`/lists/${logListId}/cards`);
+  let card = cards.find(c => c.name.toLowerCase() === name.toLowerCase());
+
+  if (!card) {
+    card = await api('/cards', 'POST', {
+      name,
+      idList: logListId,
+      desc: buildDesc({ L:0, A:0, S:0, V:0 }),
+    });
+  }
+
+  const counters = parseDesc(card.desc);
+  counters[statusKey] = (counters[statusKey] || 0) + 1;
+  await api(`/cards/${card.id}`, 'PUT', { desc: buildDesc(counters) });
+  await api(`/cards/${card.id}/actions/comments`, 'POST', {
+    text: `${TODAY} — ${STATUS_MAP[statusKey].full}`,
+  });
+}
+
+function buildDesc(c) {
+  return `## LASV Summary\n\n| Late | Absent | Sick | Vacation |\n|------|--------|------|----------|\n| ${c.L||0} | ${c.A||0} | ${c.S||0} | ${c.V||0} |`;
+}
+
+function parseDesc(desc) {
+  const d = { L:0, A:0, S:0, V:0 };
+  if (!desc) return d;
+  const m = desc.match(/\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|/);
+  if (m) { d.L=+m[1]; d.A=+m[2]; d.S=+m[3]; d.V=+m[4]; }
+  return d;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Slack
+// ═══════════════════════════════════════════════════════════
+async function sendSlack() {
+  const TODAY = todayFormatted();
+  const present  = employees.filter(n => !attendance[n]);
+  const late     = employees.filter(n => attendance[n]==='L');
+  const absent   = employees.filter(n => attendance[n]==='A');
+  const sick     = employees.filter(n => attendance[n]==='S');
+  const vacation = employees.filter(n => attendance[n]==='V');
+  const line = (e,l,arr) => arr.length ? `${e} *${l}* (${arr.length}): ${arr.join(', ')}` : null;
+
+  const text = [
+    `📋 *Daily Attendance — ${TODAY}*`, '',
+    line('✅','Present',present), line('🕐','Late',late),
+    line('❌','Absent',absent),   line('🤒','Sick',sick),
+    line('🌴','Vacation',vacation),
+  ].filter(l => l!==null).join('\n');
+
+  await fetch(CONFIG.SLACK_WEBHOOK, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Authorization (one-time popup)
+// ═══════════════════════════════════════════════════════════
+async function doAuthorize() {
+  const authUrl =
+    `https://trello.com/1/authorize?expiration=never&scope=read,write` +
+    `&response_type=token&key=${CONFIG.TRELLO_API_KEY}&name=Daily+Attendance`;
+
+  const popup = window.open(authUrl, 'trello-auth', 'width=500,height=600,left=200,top=100');
+
+  window.addEventListener('message', async function handler(e) {
+    if (typeof e.data === 'string' && e.data.length === 64) {
+      window.removeEventListener('message', handler);
+      trelloToken = e.data;
+      try { await t.set('member', 'private', 'token', trelloToken); } catch(_) {}
+      if (popup && !popup.closed) popup.close();
+      await init();
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  Boot
+// ═══════════════════════════════════════════════════════════
+async function init() {
+  setLoading('Initializing...');
+  try {
+    t = window.TrelloPowerUp.iframe({
+      appKey:  CONFIG.TRELLO_API_KEY,
+      appName: 'Daily Attendance',
+    });
+
+    trelloToken = await t.get('member', 'private', 'token');
+
+    if (!trelloToken) {
+      setAuthScreen();
+      return;
+    }
+
+    await loadEmployees();
+    render();
+
+  } catch(e) {
+    console.error('Boot error:', e);
+    if (!trelloToken) {
+      setAuthScreen();
+    } else {
+      setError(e.message);
+    }
+  }
+}
+
+init();
+</script>
+</body>
+</html>
