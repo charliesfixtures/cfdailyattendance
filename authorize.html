@@ -2,60 +2,148 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Authorize</title>
   <script src="https://p.trellocdn.com/power-up.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=DM+Mono&display=swap" rel="stylesheet"/>
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Sora', sans-serif;
-      background: #0f1117;
-      color: #e2e8f0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      gap: 16px;
-      padding: 20px;
-      text-align: center;
+      background: #0f1117; color: #e2e8f0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 100vh; padding: 24px; gap: 16px; text-align: center;
     }
-    p { color: #64748b; font-size: 13px; line-height: 1.6; }
-    button {
-      padding: 10px 24px;
-      background: #4f8ef7;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-family: 'Sora', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
+    .icon { font-size: 32px; }
+    h3 { font-size: 16px; font-weight: 700; }
+    p  { font-size: 12px; color: #64748b; line-height: 1.7; max-width: 300px; }
+
+    .step {
+      background: #1a1d27; border: 1px solid #2a2d3e;
+      border-radius: 10px; padding: 16px; width: 100%; max-width: 340px; text-align: left;
     }
-    button:hover { opacity: 0.85; }
+    .step-title { font-size: 12px; font-weight: 700; color: #4f8ef7; margin-bottom: 8px; }
+    .step p { font-size: 12px; color: #94a3b8; }
+
+    textarea {
+      width: 100%; padding: 10px; border-radius: 8px;
+      border: 1px solid #2a2d3e; background: #0f1117;
+      color: #e2e8f0; font-family: 'DM Mono', monospace;
+      font-size: 11px; resize: none; height: 70px; margin-top: 8px;
+    }
+    textarea:focus { outline: none; border-color: #4f8ef7; }
+    textarea::placeholder { color: #374151; }
+
+    .btn {
+      width: 100%; max-width: 340px; padding: 12px;
+      background: #4f8ef7; color: #fff; border: none;
+      border-radius: 10px; font-family: 'Sora', sans-serif;
+      font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-outline {
+      background: transparent; border: 1px solid #2a2d3e; color: #64748b;
+    }
+    .btn-outline:hover { border-color: #4f8ef7; color: #4f8ef7; opacity: 1; }
+
+    .msg { font-size: 12px; font-family: 'DM Mono', monospace; min-height: 18px; }
+    .msg.ok    { color: #10b981; }
+    .msg.error { color: #ef4444; }
+
+    .divider {
+      width: 100%; max-width: 340px;
+      display: flex; align-items: center; gap: 10px;
+      color: #2a2d3e; font-size: 11px;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: #2a2d3e;
+    }
   </style>
 </head>
 <body>
-  <h3>🔐 Authorize Power-Up</h3>
-  <p>This allows the Attendance Power-Up to read and write cards on your behalf.</p>
-  <button id="authBtn">Authorize with Trello</button>
 
-  <script>
-    const TRELLO_API_KEY = '53abc1f4686798eadbeb8f91ea79c9bb';
+<div class="icon">🔐</div>
+<h3>Authorize CF Daily Attendance</h3>
+<p>Choose one of the options below to connect your Trello account.</p>
 
-    document.getElementById('authBtn').addEventListener('click', function() {
-      const t = window.TrelloPowerUp.iframe();
-      const authUrl = `https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&key=${TRELLO_API_KEY}&callback_method=postMessage&return_url=${location.origin}`;
+<!-- Option 1: Auto popup -->
+<button class="btn" onclick="openAuthPopup()">Connect via Trello</button>
 
-      window.addEventListener('message', function(e) {
-        if (typeof e.data === 'string' && e.data.length === 64) {
-          t.set('member', 'private', 'token', e.data).then(function() {
-            t.closePopup();
-          });
-        }
-      });
+<div class="divider">or paste token manually</div>
 
-      window.open(authUrl, 'trello-auth', 'width=500,height=600');
+<!-- Option 2: Manual paste -->
+<div class="step">
+  <div class="step-title">Paste your Trello token</div>
+  <p>If you already authorized and got a token, paste it below:</p>
+  <textarea id="tokenInput" placeholder="Paste your token here (starts with ATTA...)"></textarea>
+</div>
+
+<button class="btn btn-outline" onclick="saveManualToken()">Save Token</button>
+<div class="msg" id="msg"></div>
+
+<script>
+  var TRELLO_API_KEY = '53abc1f4686798eadbeb8f91ea79c9bb';
+  var t = window.TrelloPowerUp.iframe({
+    appKey:  TRELLO_API_KEY,
+    appName: 'CF Daily Attendance',
+  });
+
+  // ── Option 1: Popup flow (automatic) ──────────────────────
+  function openAuthPopup() {
+    var authUrl =
+      'https://trello.com/1/authorize?expiration=never&scope=read,write' +
+      '&response_type=token&key=' + TRELLO_API_KEY +
+      '&name=CF+Daily+Attendance&callback_method=postMessage' +
+      '&return_url=' + encodeURIComponent(window.location.origin);
+
+    var popup = window.open(authUrl, 'trello-auth', 'width=500,height=600,left=200,top=100');
+
+    window.addEventListener('message', function handler(e) {
+      if (typeof e.data === 'string' && e.data.length > 20) {
+        window.removeEventListener('message', handler);
+        storeToken(e.data.trim(), popup);
+      }
     });
-  </script>
+  }
+
+  // ── Option 2: Manual paste ────────────────────────────────
+  function saveManualToken() {
+    var token = document.getElementById('tokenInput').value.trim();
+    if (!token) {
+      showMsg('Please paste your token first.', 'error');
+      return;
+    }
+    storeToken(token, null);
+  }
+
+  // ── Store token & close ───────────────────────────────────
+  function storeToken(token, popup) {
+    t.set('member', 'private', 'token', token)
+      .then(function() {
+        showMsg('✓ Authorized! Closing...', 'ok');
+        if (popup && !popup.closed) popup.close();
+        setTimeout(function() { t.closePopup(); }, 800);
+      })
+      .catch(function(err) {
+        showMsg('✗ Could not save token: ' + err.message, 'error');
+      });
+  }
+
+  function showMsg(text, type) {
+    var el = document.getElementById('msg');
+    el.textContent = text;
+    el.className = 'msg ' + (type || '');
+  }
+
+  // ── Auto-check if token already stored ───────────────────
+  t.get('member', 'private', 'token').then(function(token) {
+    if (token) {
+      showMsg('✓ Already authorized!', 'ok');
+      setTimeout(function() { t.closePopup(); }, 600);
+    }
+  });
+</script>
 </body>
 </html>
