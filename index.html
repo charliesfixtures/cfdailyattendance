@@ -479,6 +479,16 @@ async function init() {
 
     trelloToken = await t.get('member', 'private', 'token');
 
+    // Fallback: check localStorage (stored by setup.html)
+    if (!trelloToken) {
+      const lsToken = localStorage.getItem('trello_attendance_token');
+      if (lsToken) {
+        await t.set('member', 'private', 'token', lsToken);
+        localStorage.removeItem('trello_attendance_token');
+        trelloToken = lsToken;
+      }
+    }
+
     if (!trelloToken) {
       setAuthScreen();
       return;
