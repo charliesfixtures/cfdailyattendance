@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -565,12 +564,13 @@ async function sendSlack(finalSelections) {
     return;
   }
 
-  // NOTE: No Content-Type header — sending with application/json triggers a CORS
-  // preflight that Slack blocks from browser origins. Omitting the header sends it
-  // as a simple request which Slack accepts fine (still valid JSON in the body).
+  // Use application/x-www-form-urlencoded with payload= parameter.
+  // This avoids the CORS preflight that blocks application/json from browsers,
+  // while still delivering a properly parsed message to Slack.
   const res = await fetch(webhookUrl, {
     method: 'POST',
-    body:   JSON.stringify({ text: lines.join('\n') }),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'payload=' + encodeURIComponent(JSON.stringify({ text: lines.join('\n') })),
   });
 
   if (!res.ok) {
