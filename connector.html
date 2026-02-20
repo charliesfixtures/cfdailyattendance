@@ -42,20 +42,6 @@
       }];
     },
 
-    'authorization-status': function(t) {
-      return t.get('member', 'private', 'token').then(function(token) {
-        return { authorized: !!token };
-      });
-    },
-
-    'show-authorization': function(t) {
-      return t.popup({
-        title: 'Authorize CF Daily Attendance',
-        url: BASE_URL + 'authorize.html',
-        height: 250,
-      });
-    },
-
   }, {
     appKey:  '53abc1f4686798eadbeb8f91ea79c9bb',
     appName: 'CF Daily Attendance',

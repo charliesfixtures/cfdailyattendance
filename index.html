@@ -268,8 +268,12 @@ function setAuthScreen() {
       <div><div class="header-title">Daily Attendance</div><div class="header-date">${todayFormatted()}</div></div>
     </div>
     <div class="auth-box">
-      <p>This Power-Up needs one-time permission to read and write Trello cards on your behalf.</p>
-      <button class="btn-submit" style="max-width:200px" onclick="doAuthorize()">🔐 Authorize</button>
+      <p style="margin-bottom:10px">One-time setup required. Click below — it opens a setup page. Follow the 3 steps, then come back and click <strong>↺ Retry</strong>.</p>
+      <a href="https://charliesfixtures.github.io/cfdailyattendance/setup.html" target="_blank">
+        <button class="btn-submit" style="max-width:220px;margin-bottom:10px">🔐 Open Setup Page</button>
+      </a>
+      <br/>
+      <button class="btn-secondary" style="max-width:220px;margin-top:8px" onclick="init()">↺ Retry After Setup</button>
     </div>`;
 }
 
