@@ -646,18 +646,22 @@ function showSummary() {
           <div class="summary-header-title">✅ Attendance Submitted</div>
           <div class="summary-header-sub">Slack notified · ${employees.length} employees</div>
         </div>
-        <div style="font-size:22px;font-weight:700;color:#5b8dee">${present.length}</div>
+        <div style="font-size:22px;font-weight:700;color:#5b8dee">${present.length}<span style="font-size:11px;font-weight:400;color:var(--sub);margin-left:3px">present</span></div>
       </div>
 
-      ${section('✅','Present','#5b8dee', present)}
-      ${section('🕐','Late','#e6a817', late)}
-      ${section('❌','Absent','#e54545', absent)}
-      ${section('🤒','Sick','#9b59f5', sick)}
-      ${section('🌴','Vacation','#11c987', vacation)}
+      ${late.length || absent.length || sick.length || vacation.length
+        ? `${section('🕐','Late','#e6a817', late)}
+           ${section('❌','Absent','#e54545', absent)}
+           ${section('🤒','Sick','#9b59f5', sick)}
+           ${section('🌴','Vacation','#11c987', vacation)}`
+        : `<div class="summary-section" style="color:var(--sub);font-size:12px;text-align:center;padding:16px">
+             🎉 All ${employees.length} employees present today!
+           </div>`
+      }
 
       <div class="summary-footer">
         <span class="summary-footer-stat">${DATE}</span>
-        <span class="summary-footer-stat">${employees.length - present.length} flagged</span>
+        <span class="summary-footer-stat">${present.length} present · ${employees.length - present.length} flagged</span>
       </div>
     </div>`;
 
@@ -769,26 +773,25 @@ async function saveEdit(cardId, empName) {
 async function logEmployee(emp, statusKey) {
   const DATE   = today();
   const status = STATUS[statusKey];
-
-  // Use the employee's own card in "2026 Employee" list
-  // cardId was stored when we loaded employees
   const cardId = emp.cardId;
 
-  // Get latest desc to avoid overwriting concurrent changes
-  const card = await api(`/cards/${cardId}?fields=desc`);
+  if (!cardId) throw new Error(`No card ID found for ${emp.name} — try refreshing.`);
+
+  // Fetch current description so we can update counters accurately
+  const card     = await api(`/cards/${cardId}?fields=desc`);
   const counters = parseDesc(card.desc);
-  counters[statusKey]++;
+  counters[statusKey] = (counters[statusKey] || 0) + 1;
 
-  // Update counter table in description
-  await api(`/cards/${cardId}`,'PUT',{ desc: buildDesc(counters) });
+  // Write updated counters back to description
+  await api(`/cards/${cardId}`, 'PUT', { desc: buildDesc(counters) });
 
-  // Add comment log entry
-  await api(`/cards/${cardId}/actions/comments`,'POST',{
+  // Add dated comment entry
+  await api(`/cards/${cardId}/actions/comments`, 'POST', {
     text: `${emp.name} — ${status.label} — ${DATE}`,
   });
 
-  // Update local counter so summary screen shows correct numbers
-  emp.counters[statusKey] = (emp.counters[statusKey] || 0) + 1;
+  // Update in-memory counter so the UI reflects new value
+  emp.counters = { ...emp.counters, [statusKey]: counters[statusKey] };
 }
 
 function buildDesc(c) {
@@ -807,32 +810,44 @@ function parseDesc(desc) {
 //  Slack
 // ════════════════════════════════════════════════════════
 async function sendSlack() {
-  const DATE    = today();
+  const DATE     = today();
   const present  = employees.filter(e => selections[e.name]==='P').map(e=>e.name);
   const late     = employees.filter(e => selections[e.name]==='L').map(e=>e.name);
   const absent   = employees.filter(e => selections[e.name]==='A').map(e=>e.name);
   const sick     = employees.filter(e => selections[e.name]==='S').map(e=>e.name);
   const vacation = employees.filter(e => selections[e.name]==='V').map(e=>e.name);
+  const flagged  = employees.length - present.length;
 
   const section = (emoji, label, names) =>
     names.length ? `${emoji} *${label}* (${names.length})\n${names.map(n=>`• ${n}`).join('\n')}` : null;
 
-  const text = [
+  const lines = [
     `📋 *Daily Attendance — ${DATE}*`,
-    `_${employees.length} employees · ${present.length} present today_`,
+    `_${employees.length} employees · ${present.length} present · ${flagged} flagged_`,
     '',
-    section('✅', 'Present',  present),
-    section('🕐', 'Late',     late),
-    section('❌', 'Absent',   absent),
-    section('🤒', 'Sick',     sick),
-    section('🌴', 'Vacation', vacation),
-  ].filter(l => l !== null).join('\n');
+  ];
 
-  await fetch(CFG.SLACK_WEBHOOK, {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ text }),
-  });
+  if (flagged === 0) {
+    lines.push('🎉 All employees present today!');
+  } else {
+    [
+      section('🕐', 'Late',     late),
+      section('❌', 'Absent',   absent),
+      section('🤒', 'Sick',     sick),
+      section('🌴', 'Vacation', vacation),
+    ].filter(Boolean).forEach(s => { lines.push(s); lines.push(''); });
+  }
+
+  try {
+    const res = await fetch(CFG.SLACK_WEBHOOK, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ text: lines.join('\n') }),
+    });
+    if (!res.ok) console.warn('Slack responded:', res.status);
+  } catch(e) {
+    console.warn('Slack notification failed (non-critical):', e.message);
+  }
 }
 
 // ════════════════════════════════════════════════════════
