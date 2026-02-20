@@ -228,14 +228,30 @@ async function loadEmployees() {
 function parseDesc(desc) {
   const d = { L: 0, A: 0, S: 0, V: 0 };
   if (!desc) return d;
-  // Match the data row of the markdown table — handles spaces flexibly
-  const m = desc.match(/\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|/);
-  if (m) { d.L = +m[1]; d.A = +m[2]; d.S = +m[3]; d.V = +m[4]; }
+  // Try new emoji line format first: "🕐 Late: 2"
+  const lm = desc.match(/Late:\s*(\d+)/);
+  const am = desc.match(/Absent:\s*(\d+)/);
+  const sm = desc.match(/Sick:\s*(\d+)/);
+  const vm = desc.match(/Vacation:\s*(\d+)/);
+  if (lm || am || sm || vm) {
+    d.L = lm ? +lm[1] : 0;
+    d.A = am ? +am[1] : 0;
+    d.S = sm ? +sm[1] : 0;
+    d.V = vm ? +vm[1] : 0;
+    return d;
+  }
+  // Fallback: old markdown table — migrates existing cards automatically
+  const tm = desc.match(/\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|/);
+  if (tm) { d.L = +tm[1]; d.A = +tm[2]; d.S = +tm[3]; d.V = +tm[4]; }
   return d;
 }
 
 function buildDesc(c) {
-  return `## LASV Summary\n\n| Late | Absent | Sick | Vacation |\n|------|--------|------|----------|\n| ${c.L||0} | ${c.A||0} | ${c.S||0} | ${c.V||0} |`;
+  const L = c.L || 0, A = c.A || 0, S = c.S || 0, V = c.V || 0;
+  const total = L + A + S + V;
+  const bar = total === 0 ? '🟢 Perfect attendance'
+    : [L ? `🕐 ×${L}` : '', A ? `❌ ×${A}` : '', S ? `🤒 ×${S}` : '', V ? `🌴 ×${V}` : ''].filter(Boolean).join('  ');
+  return `## LASV Summary\n\n🕐 Late: ${L}\n❌ Absent: ${A}\n🤒 Sick: ${S}\n🌴 Vacation: ${V}\n\n---\n${bar}`;
 }
 
 // ════════════════════════════════════════════════════════
