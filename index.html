@@ -24,12 +24,16 @@
       --radius:   8px;
     }
 
+    html {
+      overflow: hidden; /* Let Trello handle scrolling, not us */
+    }
     body {
       font-family: 'Inter', sans-serif;
       background: var(--bg);
       color: var(--text);
       padding: 0;
       margin: 0;
+      overflow: visible;
     }
 
     /* ── Auth screen ── */
@@ -184,6 +188,108 @@
 
     .footer-actions { display: flex; gap: 6px; }
 
+    /* ── Submit progress ── */
+    .submit-progress {
+      padding: 20px 16px; text-align: center;
+    }
+    .progress-bar-wrap {
+      height: 4px; background: var(--border); border-radius: 2px;
+      margin: 10px 0 8px; overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%; background: #5b8dee; border-radius: 2px;
+      transition: width 0.4s ease; width: 0%;
+    }
+    .progress-label {
+      font-size: 11px; color: var(--sub); font-family: monospace;
+      min-height: 16px;
+    }
+
+    /* ── Summary card shown after submit ── */
+    .summary-card {
+      margin: 8px 12px 12px;
+      background: #1a1f35; border: 1px solid #2d3148;
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .summary-header {
+      background: #1e2540; padding: 10px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .summary-header-title {
+      font-size: 12px; font-weight: 600; color: var(--text);
+    }
+    .summary-header-sub {
+      font-size: 10px; color: var(--sub);
+    }
+    .summary-section {
+      padding: 8px 14px; border-top: 1px solid #2d3148;
+    }
+    .summary-section-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+      text-transform: uppercase; margin-bottom: 5px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .summary-names {
+      font-size: 12px; color: var(--text); line-height: 1.8;
+    }
+    .summary-name-pill {
+      display: inline-block; margin: 1px 3px 1px 0;
+      padding: 1px 8px; border-radius: 20px; font-size: 11px;
+    }
+    .summary-footer {
+      padding: 8px 14px; border-top: 1px solid #2d3148;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .summary-footer-stat {
+      font-size: 11px; color: var(--sub);
+    }
+    .btn-reopen {
+      font-size: 11px; color: var(--sub); background: transparent;
+      border: 1px solid var(--border); border-radius: 5px;
+      padding: 3px 10px; cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: all 0.15s;
+    }
+    .btn-reopen:hover { border-color: var(--sub); color: var(--text); }
+
+    /* ── Edit mode ── */
+    .edit-section {
+      margin: 0 12px 12px;
+      background: #1a1f35; border: 1px solid #2d3148;
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .edit-header {
+      background: #1e2540; padding: 8px 14px;
+      font-size: 11px; font-weight: 600; color: var(--sub);
+      letter-spacing: 0.5px; text-transform: uppercase;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .edit-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px; border-top: 1px solid #2d3148;
+      flex-wrap: wrap;
+    }
+    .edit-name { font-size: 12px; font-weight: 500; flex: 1; min-width: 100px; }
+    .edit-counters { display: flex; gap: 6px; flex-wrap: wrap; }
+    .edit-field {
+      display: flex; align-items: center; gap: 4px;
+    }
+    .edit-field label { font-size: 10px; color: var(--sub); }
+    .edit-input {
+      width: 40px; padding: 3px 6px; border-radius: 5px;
+      border: 1px solid var(--border); background: #0d0f14;
+      color: var(--text); font-size: 12px; text-align: center;
+      font-family: 'Inter', sans-serif;
+    }
+    .edit-input:focus { outline: none; border-color: #5b8dee; }
+    .btn-save-edit {
+      font-size: 11px; padding: 3px 10px; border-radius: 5px;
+      border: 1px solid #5b8dee; background: transparent;
+      color: #5b8dee; cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-save-edit:hover { background: #5b8dee; color: #fff; }
+    .btn-save-edit:disabled { opacity: 0.4; cursor: not-allowed; }
+
     /* ── Status message ── */
     .status-msg {
       text-align: center; font-size: 11px; font-family: monospace;
@@ -266,20 +372,8 @@ async function loadEmployees() {
     `List "${CFG.EMP_LIST_NAME}" not found on your hidden board.`
   );
 
-  // Find or note log list for this year
-  const logList = lists.find(l => l.name.trim() === year());
-  const logCards = logList
-    ? await api(`/lists/${logList.id}/cards?fields=name,desc`)
-    : [];
-
-  // Build counter lookup from log cards
-  const counterMap = {};
-  logCards.forEach(c => {
-    counterMap[c.name.trim().toLowerCase()] = parseDesc(c.desc);
-  });
-
-  // Fetch employee cards with cover images
-  const cards = await api(`/lists/${empList.id}/cards?fields=name,cover`);
+  // Fetch employee cards — cover for photo, desc for LASV counters, id for logging
+  const cards = await api(`/lists/${empList.id}/cards?fields=name,cover,desc`);
   if (!cards.length) throw new Error(
     `No employee cards found in "${CFG.EMP_LIST_NAME}".`
   );
@@ -290,8 +384,9 @@ async function loadEmployees() {
       const photo = c.cover?.scaled
         ? (c.cover.scaled.find(s => s.width >= 70)?.url || c.cover.scaled[0]?.url || null)
         : null;
-      const counters = counterMap[name.toLowerCase()] || {L:0,A:0,S:0,V:0};
-      return { name, photo, counters };
+      // Read LASV counters directly from the employee card description
+      const counters = parseDesc(c.desc);
+      return { name, photo, counters, cardId: c.id };
     })
     .filter(e => e.name)
     .sort((a,b) => a.name.localeCompare(b.name));
@@ -380,8 +475,12 @@ function render() {
     <div class="status-msg" id="statusMsg"></div>
   `;
 
-  // Resize iframe to fit content
-  if (t) t.sizeTo('#app').catch(()=>{});
+  // Expand iframe to full content height — eliminates inner scrollbar
+  if (t) {
+    requestAnimationFrame(() => {
+      t.sizeTo('#app').catch(()=>{});
+    });
+  }
 }
 
 // ════════════════════════════════════════════════════════
@@ -434,81 +533,261 @@ async function refreshAll() {
 // ════════════════════════════════════════════════════════
 //  Submit
 // ════════════════════════════════════════════════════════
+let lastSubmitSelections = {}; // store for summary display
+
 async function submitAttendance() {
   const btn = document.getElementById('submitBtn');
-  const msg = document.getElementById('statusMsg');
   if (btn) btn.disabled = true;
-  if (msg) { msg.textContent = 'Submitting...'; msg.className = 'status-msg'; }
+
+  // Show animated progress UI
+  const flagged = employees.filter(e => selections[e.name] !== 'P');
+  const total   = flagged.length + 1; // +1 for Slack step
+  let   step    = 0;
+
+  function setProgress(label) {
+    step++;
+    const pct = Math.round((step / total) * 100);
+    const bar = document.getElementById('progressBar');
+    const lbl = document.getElementById('progressLabel');
+    if (bar) bar.style.width = pct + '%';
+    if (lbl) lbl.textContent = label;
+    if (t) t.sizeTo('#app').catch(()=>{});
+  }
+
+  document.getElementById('app').innerHTML = `
+    <div class="hdr">
+      <div class="hdr-left">
+        <span class="hdr-title">Attendance</span>
+        <span class="hdr-date">${today()}</span>
+      </div>
+    </div>
+    <div class="submit-progress">
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">
+        Submitting attendance...
+      </div>
+      <div style="font-size:11px;color:var(--sub);margin-bottom:10px">
+        ${flagged.length > 0 ? `Logging ${flagged.length} employee${flagged.length>1?'s':''} + Slack` : 'Sending Slack summary...'}
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progressBar" style="width:5%"></div>
+      </div>
+      <div class="progress-label" id="progressLabel">Starting...</div>
+    </div>`;
+  if (t) t.sizeTo('#app').catch(()=>{});
 
   try {
-    // Get or create year log list
-    const logListId = await getOrCreateLogList();
-
-    // Log each non-present employee
-    const flagged = employees.filter(e => selections[e.name] !== 'P');
     for (const emp of flagged) {
-      if (msg) msg.textContent = `Logging ${emp.name}...`;
-      await logEmployee(logListId, emp, selections[emp.name]);
+      setProgress(`Logging ${emp.name}...`);
+      await logEmployee(emp, selections[emp.name]);
     }
 
-    // Send Slack summary
-    if (msg) msg.textContent = 'Notifying Slack...';
+    setProgress('Notifying Slack...');
     await sendSlack();
 
+    // Save selections for summary
+    lastSubmitSelections = { ...selections };
     submitted = true;
-    render();
-    const m = document.getElementById('statusMsg');
-    if (m) {
-      m.textContent = `✓ ${flagged.length} logged · Slack notified`;
-      m.className = 'status-msg';
-    }
+    showSummary();
 
   } catch(e) {
     console.error(e);
-    const m = document.getElementById('statusMsg');
-    if (m) { m.textContent = '✗ ' + e.message; m.className = 'status-msg error'; }
-    if (btn) btn.disabled = false;
+    document.getElementById('app').innerHTML = `
+      <div class="hdr">
+        <div class="hdr-left"><span class="hdr-title">Attendance</span></div>
+        <div class="hdr-right">
+          <button class="btn-sm" onclick="render()">↺ Back</button>
+        </div>
+      </div>
+      <div class="state error">⚠️ ${e.message}<br/><br/>
+        <button class="btn-sm" onclick="submitted=false;render()">↺ Try Again</button>
+      </div>`;
+    if (t) t.sizeTo('#app').catch(()=>{});
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  Summary screen (shown after submit)
+// ════════════════════════════════════════════════════════
+function showSummary() {
+  const DATE     = today();
+  const sel      = lastSubmitSelections;
+  const present  = employees.filter(e => sel[e.name]==='P').map(e=>e.name);
+  const late     = employees.filter(e => sel[e.name]==='L').map(e=>e.name);
+  const absent   = employees.filter(e => sel[e.name]==='A').map(e=>e.name);
+  const sick     = employees.filter(e => sel[e.name]==='S').map(e=>e.name);
+  const vacation = employees.filter(e => sel[e.name]==='V').map(e=>e.name);
+
+  const section = (emoji, label, color, names) => {
+    if (!names.length) return '';
+    const pills = names.map(n =>
+      `<span class="summary-name-pill" style="background:${color}22;color:${color}">${n}</span>`
+    ).join('');
+    return `
+      <div class="summary-section">
+        <div class="summary-section-label" style="color:${color}">${emoji} ${label} (${names.length})</div>
+        <div class="summary-names">${pills}</div>
+      </div>`;
+  };
+
+  document.getElementById('app').innerHTML = `
+    <div class="hdr">
+      <div class="hdr-left">
+        <span class="hdr-title">Attendance</span>
+        <span class="hdr-date">${DATE}</span>
+      </div>
+      <div class="hdr-right">
+        <span style="font-size:11px;color:var(--vacation)">✓ Submitted</span>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-header">
+        <div>
+          <div class="summary-header-title">✅ Attendance Submitted</div>
+          <div class="summary-header-sub">Slack notified · ${employees.length} employees</div>
+        </div>
+        <div style="font-size:22px;font-weight:700;color:#5b8dee">${present.length}</div>
+      </div>
+
+      ${section('✅','Present','#5b8dee', present)}
+      ${section('🕐','Late','#e6a817', late)}
+      ${section('❌','Absent','#e54545', absent)}
+      ${section('🤒','Sick','#9b59f5', sick)}
+      ${section('🌴','Vacation','#11c987', vacation)}
+
+      <div class="summary-footer">
+        <span class="summary-footer-stat">${DATE}</span>
+        <span class="summary-footer-stat">${employees.length - present.length} flagged</span>
+      </div>
+    </div>`;
+
+  if (t) t.sizeTo('#app').catch(()=>{});
+}
+
+// reopenAttendance removed — submission is final
+
+// ════════════════════════════════════════════════════════
+//  Edit Mode — correct LASV counts on hidden board
+// ════════════════════════════════════════════════════════
+async function showEditMode() {
+  // Load current log cards so we show live counts
+  document.getElementById('app').innerHTML = `
+    <div class="hdr">
+      <div class="hdr-left"><span class="hdr-title">Edit LASV Counts</span></div>
+      <div class="hdr-right">
+        <button class="btn-sm" onclick="showSummary()">← Back</button>
+      </div>
+    </div>
+    <div class="state"><div class="spinner"></div>Loading current counts...</div>`;
+  if (t) t.sizeTo('#app').catch(()=>{});
+
+  try {
+    // Edit directly from 2026 Employee cards
+    const rows_data = employees.map(emp => ({
+      name: emp.name,
+      ctr:  emp.counters,
+      cid:  emp.cardId,
+    }));
+
+    const rows = rows_data.map(({name, ctr, cid}) => {
+      return `
+        <div class="edit-row">
+          <div class="edit-name">${name}</div>
+          <div class="edit-counters">
+            <div class="edit-field"><label>🕐</label><input class="edit-input" type="number" min="0" value="${ctr.L}" id="L_${cid}"></div>
+            <div class="edit-field"><label>❌</label><input class="edit-input" type="number" min="0" value="${ctr.A}" id="A_${cid}"></div>
+            <div class="edit-field"><label>🤒</label><input class="edit-input" type="number" min="0" value="${ctr.S}" id="S_${cid}"></div>
+            <div class="edit-field"><label>🌴</label><input class="edit-input" type="number" min="0" value="${ctr.V}" id="V_${cid}"></div>
+          </div>
+          <button class="btn-save-edit" onclick="saveEdit('${cid}','${name}')" id="savebtn_${cid}">Save</button>
+        </div>`;
+    }).join('');
+
+    document.getElementById('app').innerHTML = `
+      <div class="hdr">
+        <div class="hdr-left">
+          <span class="hdr-title">Edit LASV Counts</span>
+          <span class="hdr-date">${year()}</span>
+        </div>
+        <div class="hdr-right">
+          <button class="btn-sm" onclick="showSummary()">← Back</button>
+        </div>
+      </div>
+      <div style="padding:6px 12px 4px;font-size:11px;color:var(--sub)">
+        Adjust counts per employee. Changes are saved to the hidden board immediately.
+      </div>
+      <div class="edit-section">
+        <div class="edit-header">
+          <span>Employee</span>
+          <span style="display:flex;gap:20px;font-size:10px">🕐 &nbsp;❌ &nbsp;🤒 &nbsp;🌴</span>
+        </div>
+        ${rows}
+      </div>`;
+    if (t) t.sizeTo('#app').catch(()=>{});
+
+  } catch(e) {
+    document.getElementById('app').innerHTML = `
+      <div class="state error">⚠️ ${e.message}
+        <br/><br/><button class="btn-sm" onclick="showSummary()">← Back</button>
+      </div>`;
+    if (t) t.sizeTo('#app').catch(()=>{});
+  }
+}
+
+async function saveEdit(cardId, empName) {
+  const btnId = `savebtn_${cardId}`;
+  const btn   = document.getElementById(btnId);
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+  try {
+    const L = parseInt(document.getElementById(`L_${cardId}`)?.value) || 0;
+    const A = parseInt(document.getElementById(`A_${cardId}`)?.value) || 0;
+    const S = parseInt(document.getElementById(`S_${cardId}`)?.value) || 0;
+    const V = parseInt(document.getElementById(`V_${cardId}`)?.value) || 0;
+
+    // Write directly to the employee's card in 2026 Employee
+    await api(`/cards/${cardId}`,'PUT',{ desc: buildDesc({L,A,S,V}) });
+
+    // Update local counter
+    const emp = employees.find(e => e.name === empName);
+    if (emp) emp.counters = {L,A,S,V};
+
+    if (btn) { btn.textContent = '✓ Saved'; btn.style.color = 'var(--vacation)'; btn.style.borderColor = 'var(--vacation)'; }
+    setTimeout(() => { if (btn) { btn.textContent = 'Save'; btn.disabled = false; btn.style.color=''; btn.style.borderColor=''; } }, 2000);
+
+  } catch(e) {
+    if (btn) { btn.textContent = '✗ Error'; btn.disabled = false; }
+    console.error(e);
   }
 }
 
 // ════════════════════════════════════════════════════════
 //  Log helpers
 // ════════════════════════════════════════════════════════
-async function getOrCreateLogList() {
-  const YEAR  = year();
-  const lists = await api(`/boards/${CFG.LOG_BOARD_ID}/lists`);
-  let list = lists.find(l => l.name.trim() === YEAR);
-  if (!list) list = await api('/lists','POST',{ name:YEAR, idBoard:CFG.LOG_BOARD_ID });
-  return list.id;
-}
+// getOrCreateLogList removed — logging goes to 2026 Employee cards directly
 
-async function logEmployee(logListId, emp, statusKey) {
+async function logEmployee(emp, statusKey) {
   const DATE   = today();
   const status = STATUS[statusKey];
 
-  // Find or create employee card in log list
-  const cards = await api(`/lists/${logListId}/cards?fields=name,desc`);
-  let card = cards.find(c => c.name.trim().toLowerCase() === emp.name.toLowerCase());
+  // Use the employee's own card in "2026 Employee" list
+  // cardId was stored when we loaded employees
+  const cardId = emp.cardId;
 
-  if (!card) {
-    card = await api('/cards','POST',{
-      name:   emp.name,
-      idList: logListId,
-      desc:   buildDesc({L:0,A:0,S:0,V:0}),
-    });
-  }
-
-  // Update counters in description
+  // Get latest desc to avoid overwriting concurrent changes
+  const card = await api(`/cards/${cardId}?fields=desc`);
   const counters = parseDesc(card.desc);
   counters[statusKey]++;
-  await api(`/cards/${card.id}`,'PUT',{ desc: buildDesc(counters) });
 
-  // Add comment: "Employee Name — Late — Feb 24, 2026"
-  await api(`/cards/${card.id}/actions/comments`,'POST',{
+  // Update counter table in description
+  await api(`/cards/${cardId}`,'PUT',{ desc: buildDesc(counters) });
+
+  // Add comment log entry
+  await api(`/cards/${cardId}/actions/comments`,'POST',{
     text: `${emp.name} — ${status.label} — ${DATE}`,
   });
 
-  // Update local counter for UI
+  // Update local counter so summary screen shows correct numbers
   emp.counters[statusKey] = (emp.counters[statusKey] || 0) + 1;
 }
 
