@@ -160,3 +160,4 @@ Hidden Board: "Attendance Logs"
 
 ## 📞 Need Help?
 Go back to Claude and share any error messages — we'll fix it together!
+ 
