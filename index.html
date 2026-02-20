@@ -328,6 +328,7 @@ function render() {
       </div>
       <div class="hdr-right">
         <button class="btn-sm" onclick="refreshAll()" title="Reload employees">↺</button>
+        <button class="btn-sm" onclick="showEditMode()" title="Edit LASV counts / Reset all">✏️</button>
         ${!submitted
           ? `<button class="btn-sm" onclick="resetAll()">Reset</button>
              <button class="btn-sm primary" onclick="submitAttendance()" id="submitBtn">Submit</button>`
@@ -601,6 +602,7 @@ function showSummary(finalSelections) {
         <span class="hdr-date">${DATE}</span>
       </div>
       <div class="hdr-right">
+        <button class="btn-sm" onclick="showEditMode()" title="Edit LASV counts / Reset all">✏️ Edit</button>
         <span style="font-size:11px;color:var(--vacation)">✓ Submitted</span>
       </div>
     </div>
