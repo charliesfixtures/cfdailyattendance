@@ -431,6 +431,7 @@ function render() {
         ${ctrParts ? `<div class="emp-counters">${ctrParts}</div>` : ''}
         <div class="emp-dropdown">
           <select class="status-select v-${sel}"
+            data-emp="${emp.name.replace(/[^a-zA-Z0-9]/g, '_')}"
             onchange="setStatus(${JSON.stringify(emp.name)}, this.value, this)"
             ${submitted ? 'disabled' : ''}>
             <option value="P"${sel==='P'?' selected':''}>Present</option>
@@ -500,7 +501,7 @@ function setStatus(name, val, selectEl) {
   });
   // Update footer counts
   updateFooterCounts();
-  if (t) t.sizeTo('#app').catch(()=>{});
+  // sizeTo intentionally omitted here — resizing on dropdown change resets the iframe
 }
 
 function updateFooterCounts() {
@@ -539,9 +540,20 @@ async function submitAttendance() {
   const btn = document.getElementById('submitBtn');
   if (btn) btn.disabled = true;
 
-  // Show animated progress UI
-  const flagged = employees.filter(e => selections[e.name] !== 'P');
-  const total   = flagged.length + 1; // +1 for Slack step
+  // Read current selections DIRECTLY from the DOM dropdowns
+  // This is more reliable than the selections object which can be reset by sizeTo
+  const currentSelections = {};
+  employees.forEach(emp => {
+    const safeId  = emp.name.replace(/[^a-zA-Z0-9]/g, '_');
+    const sel     = document.querySelector(`select[data-emp="${safeId}"]`);
+    currentSelections[emp.name] = sel ? sel.value : 'P';
+  });
+
+  // Override selections with DOM values before proceeding
+  Object.assign(selections, currentSelections);
+
+  const flagged = employees.filter(e => currentSelections[e.name] !== 'P');
+  const total   = flagged.length + 1;
   let   step    = 0;
 
   function setProgress(label) {
@@ -551,7 +563,6 @@ async function submitAttendance() {
     const lbl = document.getElementById('progressLabel');
     if (bar) bar.style.width = pct + '%';
     if (lbl) lbl.textContent = label;
-    if (t) t.sizeTo('#app').catch(()=>{});
   }
 
   document.getElementById('app').innerHTML = `
@@ -578,14 +589,13 @@ async function submitAttendance() {
   try {
     for (const emp of flagged) {
       setProgress(`Logging ${emp.name}...`);
-      await logEmployee(emp, selections[emp.name]);
+      await logEmployee(emp, currentSelections[emp.name]);
     }
 
     setProgress('Notifying Slack...');
     await sendSlack();
 
-    // Save selections for summary
-    lastSubmitSelections = { ...selections };
+    lastSubmitSelections = { ...currentSelections };
     submitted = true;
     showSummary();
 
@@ -595,7 +605,7 @@ async function submitAttendance() {
       <div class="hdr">
         <div class="hdr-left"><span class="hdr-title">Attendance</span></div>
         <div class="hdr-right">
-          <button class="btn-sm" onclick="render()">↺ Back</button>
+          <button class="btn-sm" onclick="submitted=false;render()">↺ Back</button>
         </div>
       </div>
       <div class="state error">⚠️ ${e.message}<br/><br/>
