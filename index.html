@@ -148,7 +148,6 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tex
 const CFG = {
   API_KEY:      '53abc1f4686798eadbeb8f91ea79c9bb',
   LOG_BOARD_ID: '6965633f4fe5254c47e38527',
-  SLACK_WEBHOOK: 'SLACK_WEBHOOK_PLACEHOLDER',
   EMP_LIST_NAME: '2026 Employee',
 };
 
@@ -451,8 +450,8 @@ async function submitAttendance() {
       </div>
       <div style="font-size:11px;color:var(--sub);margin-bottom:10px">
         ${flagged.length > 0
-          ? `Logging ${flagged.length} employee${flagged.length > 1 ? 's' : ''} + Slack`
-          : 'Sending Slack summary...'}
+          ? `Logging ${flagged.length} employee${flagged.length > 1 ? 's' : ''} + posting summary`
+          : 'Posting summary comment...'}
       </div>
       <div class="progress-bar-wrap">
         <div class="progress-bar" id="progressBar" style="width:5%"></div>
@@ -468,8 +467,8 @@ async function submitAttendance() {
       await logEmployee(emp, finalSelections[emp.name]);
     }
 
-    setProgress('Notifying Slack...');
-    await sendSlack(finalSelections);
+    setProgress('Posting summary comment...');
+    await postSummaryComment(finalSelections);
 
     // Complete progress bar
     const bar = document.getElementById('progressBar');
@@ -527,7 +526,8 @@ async function logEmployee(emp, statusKey) {
 // Slack notification — receives finalSelections as param
 // to avoid any reliance on the global `selections` object
 // ════════════════════════════════════════════════════════
-async function sendSlack(finalSelections) {
+async function postSummaryComment(finalSelections) {
+  // Build the summary text — formatted for Slack via Butler automation
   const DATE    = today();
   const present  = employees.filter(e => finalSelections[e.name] === 'P').map(e => e.name);
   const late     = employees.filter(e => finalSelections[e.name] === 'L').map(e => e.name);
@@ -537,13 +537,11 @@ async function sendSlack(finalSelections) {
   const flagged  = employees.length - present.length;
 
   const section = (emoji, label, names) =>
-    names.length
-      ? `${emoji} *${label}* (${names.length})\n${names.map(n => `• ${n}`).join('\n')}`
-      : null;
+    names.length ? `${emoji} ${label} (${names.length}):\n${names.map(n => `• ${n}`).join('\n')}` : null;
 
   const lines = [
-    `📋 *Daily Attendance — ${DATE}*`,
-    `_${employees.length} employees · ${present.length} present · ${flagged} flagged_`,
+    `📋 Daily Attendance — ${DATE}`,
+    `${employees.length} employees · ${present.length} present · ${flagged} flagged`,
     '',
   ];
 
@@ -558,24 +556,15 @@ async function sendSlack(finalSelections) {
     ].filter(Boolean).forEach(s => { lines.push(s); lines.push(''); });
   }
 
-  const webhookUrl = CFG.SLACK_WEBHOOK;
-  if (!webhookUrl || webhookUrl === 'SLACK_WEBHOOK_PLACEHOLDER') {
-    console.warn('Slack webhook not configured — skipping Slack notification.');
-    return;
-  }
+  // Get the current Attendance card ID from Trello context
+  const cardInfo = await t.card('id');
+  const cardId   = cardInfo.id;
 
-  // Use application/x-www-form-urlencoded with payload= parameter.
-  // This avoids the CORS preflight that blocks application/json from browsers,
-  // while still delivering a properly parsed message to Slack.
-  const res = await fetch(webhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'payload=' + encodeURIComponent(JSON.stringify({ text: lines.join('\n') })),
+  // Post the summary as a comment on this Attendance card.
+  // Butler automation will detect this comment and forward it to Slack.
+  await api(`/cards/${cardId}/actions/comments`, 'POST', {
+    text: lines.join('\n'),
   });
-
-  if (!res.ok) {
-    throw new Error(`Slack returned ${res.status} — check webhook URL in GitHub Secrets.`);
-  }
 }
 
 // ════════════════════════════════════════════════════════
