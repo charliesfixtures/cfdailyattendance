@@ -1,0 +1,89 @@
+name: Yearly LASV Reset
+
+on:
+  schedule:
+    # Runs at 12:01 AM PST on January 1st every year
+    # PST = UTC-8, so 12:01am PST = 08:01am UTC Jan 1
+    - cron: '1 8 1 1 *'
+
+  # Also allows you to trigger it manually from GitHub Actions tab (for testing)
+  workflow_dispatch:
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Reset all Employee card descriptions and comments
+        env:
+          TRELLO_API_KEY: ${{ secrets.TRELLO_API_KEY }}
+          TRELLO_TOKEN: ${{ secrets.TRELLO_TOKEN }}
+          TRELLO_BOARD_ID: 6965633f4fe5254c47e38527
+          EMP_LIST_NAME: Employee
+        run: |
+          echo "🔄 Starting yearly LASV reset..."
+
+          # Get all lists on the hidden board
+          LISTS=$(curl -s "https://api.trello.com/1/boards/${TRELLO_BOARD_ID}/lists?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}")
+
+          # Extract the Employee list ID
+          EMP_LIST_ID=$(echo $LISTS | python3 -c "
+          import sys, json
+          lists = json.load(sys.stdin)
+          emp = next((l for l in lists if l['name'].strip().lower() == '${EMP_LIST_NAME}'.lower()), None)
+          print(emp['id'] if emp else '')
+          ")
+
+          if [ -z "$EMP_LIST_ID" ]; then
+            echo "❌ Could not find list named '${EMP_LIST_NAME}' — aborting."
+            exit 1
+          fi
+
+          echo "✅ Found Employee list: $EMP_LIST_ID"
+
+          # Get all cards in the Employee list
+          CARDS=$(curl -s "https://api.trello.com/1/lists/${EMP_LIST_ID}/cards?fields=id,name&key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}")
+
+          CARD_COUNT=$(echo $CARDS | python3 -c "import sys,json; print(len(json.load(sys.stdin)))")
+          echo "📋 Found $CARD_COUNT employee cards to reset"
+
+          # Loop through each card
+          echo $CARDS | python3 << 'PYEOF'
+          import sys, json, urllib.request, urllib.parse, os
+
+          api_key   = os.environ['TRELLO_API_KEY']
+          token     = os.environ['TRELLO_TOKEN']
+          cards     = json.load(sys.stdin)
+          base      = 'https://api.trello.com/1'
+          auth      = f'key={api_key}&token={token}'
+          new_desc  = '## LASV Summary\n\n🕐 Late: 0\n❌ Absent: 0\n🤒 Sick: 0\n🌴 Vacation: 0\n\n---\n🟢 Perfect attendance'
+
+          for card in cards:
+            cid  = card['id']
+            name = card['name']
+
+            # 1. Zero out the description
+            data = urllib.parse.urlencode({'desc': new_desc}).encode()
+            req  = urllib.request.Request(f'{base}/cards/{cid}?{auth}', data=data, method='PUT')
+            req.add_header('Content-Type', 'application/x-www-form-urlencoded')
+            urllib.request.urlopen(req)
+
+            # 2. Get all comments on this card
+            url      = f'{base}/cards/{cid}/actions?filter=commentCard&limit=1000&{auth}'
+            actions  = json.loads(urllib.request.urlopen(url).read())
+
+            # 3. Delete each comment
+            for action in actions:
+              del_req = urllib.request.Request(
+                f'{base}/actions/{action["id"]}?{auth}',
+                method='DELETE'
+              )
+              urllib.request.urlopen(del_req)
+
+            print(f'  ✅ Reset {name} ({len(actions)} comments deleted)')
+
+          print(f'\n🎉 All {len(cards)} employee cards reset for the new year!')
+          PYEOF
+
+      - name: Done
+        run: echo "✅ Yearly reset complete. Happy New Year! 🎉"
