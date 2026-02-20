@@ -11,34 +11,29 @@
 
   TrelloPowerUp.initialize({
 
-    'card-buttons': function(t) {
-      return [{
-        icon: BASE_URL + 'icon.svg',
-        text: 'Daily Attendance',
-        callback: function(t) {
-          return t.popup({
-            title: 'CF Daily Attendance',
-            url: BASE_URL + 'index.html',
-            height: 800,
-            mouseEvent: event,
-          });
-        }
-      }];
+    // ── Appears as a section inside every card ──────────────
+    'card-back-section': function(t) {
+      return {
+        title: 'Daily Attendance',
+        icon:  BASE_URL + 'icon.svg',
+        content: {
+          type:   'iframe',
+          url:    t.signUrl(BASE_URL + 'index.html'),
+          height: 35,  // starts small, index.html calls sizeTo to expand
+        },
+      };
     },
 
+    // ── Board button (top bar) ───────────────────────────────
     'board-buttons': function(t) {
       return [{
-        icon: {
-          dark:  BASE_URL + 'icon.svg',
-          light: BASE_URL + 'icon.svg',
-        },
+        icon: { dark: BASE_URL + 'icon.svg', light: BASE_URL + 'icon.svg' },
         text: 'Attendance',
-        callback: function(t, event) {
+        callback: function(t) {
           return t.popup({
-            title: 'CF Daily Attendance',
-            url: BASE_URL + 'index.html',
+            title:  'CF Daily Attendance',
+            url:    BASE_URL + 'index.html',
             height: 800,
-            mouseEvent: event,
           });
         }
       }];

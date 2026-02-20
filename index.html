@@ -1,474 +1,515 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Daily Attendance</title>
+  <title>CF Daily Attendance</title>
   <script src="https://p.trellocdn.com/power-up.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:      #0d0f14;
-      --surface: #161920;
-      --card:    #1e2130;
-      --border:  #2d3148;
-      --accent:  #5b8dee;
-      --late:    #f0a500;
-      --absent:  #e84545;
-      --sick:    #9b59f5;
-      --vacation:#11c987;
-      --text:    #eef0f6;
-      --sub:     #8b91a8;
-      --radius:  12px;
+      --bg:       transparent;
+      --row-bg:   #1e2130;
+      --row-hover:#252839;
+      --border:   #2d3148;
+      --text:     #dde1f0;
+      --sub:      #7880a0;
+      --present:  #7880a0;
+      --late:     #e6a817;
+      --absent:   #e54545;
+      --sick:     #9b59f5;
+      --vacation: #11c987;
+      --radius:   8px;
     }
 
-    html, body {
-      font-family: 'Sora', sans-serif;
+    body {
+      font-family: 'Inter', sans-serif;
       background: var(--bg);
       color: var(--text);
-      margin: 0; padding: 0;
-      width: 100%;
-      overflow-x: hidden;
+      padding: 0;
+      margin: 0;
     }
-    body { padding: 14px; }
-    #app { width: 100%; }
 
-    /* ── Header ── */
-    .header {
-      display: flex; align-items: center; gap: 10px;
-      margin-bottom: 14px; padding-bottom: 12px;
-      border-bottom: 1px solid var(--border);
+    /* ── Auth screen ── */
+    .auth-screen {
+      padding: 16px;
+      background: #1e2130;
+      border-radius: var(--radius);
+      margin: 8px;
     }
-    .header-icon {
-      width: 32px; height: 32px; background: var(--accent);
-      border-radius: 8px; display: flex; align-items: center;
-      justify-content: center; font-size: 16px; flex-shrink: 0;
+    .auth-screen p {
+      font-size: 12px; color: var(--sub);
+      line-height: 1.7; margin-bottom: 12px;
     }
-    .header-title { font-size: 14px; font-weight: 700; color: var(--text); }
-    .header-date  { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--sub); margin-top: 1px; }
-    .header-refresh {
-      margin-left: auto; background: transparent; border: 1px solid var(--border);
-      color: var(--sub); border-radius: 6px; padding: 4px 10px;
-      font-size: 11px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.2s;
+    .auth-screen a { color: #5b8dee; }
+    .auth-textarea {
+      width: 100%; padding: 8px; border-radius: 6px;
+      border: 1px solid var(--border); background: #0d0f14;
+      color: var(--text); font-family: monospace; font-size: 11px;
+      resize: none; height: 60px; margin-bottom: 8px;
     }
-    .header-refresh:hover { border-color: var(--accent); color: var(--accent); }
+    .auth-textarea:focus { outline: none; border-color: #5b8dee; }
 
-    /* ── States ── */
-    .state-box {
-      text-align: center; padding: 40px 16px;
-      font-family: 'DM Mono', monospace; font-size: 13px; color: var(--sub); line-height: 1.7;
+    /* ── Loading / error ── */
+    .state {
+      padding: 20px 16px; text-align: center;
+      font-size: 12px; color: var(--sub); font-family: monospace;
     }
-    .state-box.error { color: var(--absent); }
+    .state.error { color: var(--absent); }
     .spinner {
-      width: 26px; height: 26px; border: 3px solid var(--border);
-      border-top-color: var(--accent); border-radius: 50%;
-      animation: spin 0.8s linear infinite; margin: 0 auto 14px;
+      width: 20px; height: 20px; border: 2px solid var(--border);
+      border-top-color: #5b8dee; border-radius: 50%;
+      animation: spin .7s linear infinite; margin: 0 auto 10px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Auth box ── */
-    .auth-box {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 18px; margin-top: 16px;
+    /* ── Header ── */
+    .hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px 8px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 4px;
     }
-
-    /* ── Summary pills ── */
-    .summary-row {
-      display: grid; grid-template-columns: repeat(5, 1fr);
-      gap: 6px; margin-bottom: 12px;
+    .hdr-left { display: flex; align-items: center; gap: 8px; }
+    .hdr-title { font-size: 12px; font-weight: 600; color: var(--sub); letter-spacing: 0.6px; text-transform: uppercase; }
+    .hdr-date  { font-size: 11px; color: var(--sub); opacity: 0.6; }
+    .hdr-right { display: flex; gap: 6px; align-items: center; }
+    .btn-sm {
+      padding: 4px 10px; border-radius: 5px; font-size: 11px;
+      font-family: 'Inter', sans-serif; font-weight: 500;
+      cursor: pointer; border: 1px solid var(--border);
+      background: transparent; color: var(--sub); transition: all 0.15s;
     }
-    .summary-pill {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 8px; padding: 7px 4px;
-      display: flex; flex-direction: column; align-items: center; gap: 2px;
+    .btn-sm:hover { border-color: var(--sub); color: var(--text); }
+    .btn-sm.primary {
+      background: #5b8dee; border-color: #5b8dee; color: #fff;
     }
-    .summary-pill .count { font-size: 18px; font-weight: 700; line-height: 1; }
-    .summary-pill .label { font-size: 9px; color: var(--sub); font-family: 'DM Mono', monospace; letter-spacing: 0.3px; }
+    .btn-sm.primary:hover { opacity: 0.88; }
+    .btn-sm:disabled { opacity: 0.35; cursor: not-allowed; }
 
     /* ── Employee list ── */
-    .employee-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .emp-list { padding: 0 8px; }
 
-    .employee-row {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 10px 12px;
-      display: flex; flex-direction: column; gap: 8px;
-      transition: border-color 0.2s; animation: fadeIn 0.2s ease both;
-    }
-    .employee-row.status-L { border-color: var(--late);    background: #1e1a0e; }
-    .employee-row.status-A { border-color: var(--absent);  background: #1e0e0e; }
-    .employee-row.status-S { border-color: var(--sick);    background: #170e1e; }
-    .employee-row.status-V { border-color: var(--vacation);background: #0e1e16; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .employee-row:nth-child(1)  { animation-delay:.02s }
-    .employee-row:nth-child(2)  { animation-delay:.04s }
-    .employee-row:nth-child(3)  { animation-delay:.06s }
-    .employee-row:nth-child(4)  { animation-delay:.08s }
-    .employee-row:nth-child(5)  { animation-delay:.10s }
-    .employee-row:nth-child(6)  { animation-delay:.12s }
-    .employee-row:nth-child(7)  { animation-delay:.14s }
-    .employee-row:nth-child(8)  { animation-delay:.16s }
-    .employee-row:nth-child(9)  { animation-delay:.18s }
-    .employee-row:nth-child(10) { animation-delay:.20s }
-
-    /* ── Top row: avatar + name + status badge ── */
-    .emp-top {
+    /* ── Single employee row ── */
+    .emp-row {
       display: flex; align-items: center; gap: 10px;
+      padding: 7px 8px; border-radius: var(--radius);
+      margin-bottom: 3px; transition: background 0.15s;
+      position: relative;
     }
+    .emp-row:hover { background: var(--row-hover); }
+
+    /* Left accent bar — shows status color */
+    .emp-row::before {
+      content: ''; position: absolute; left: 0; top: 6px; bottom: 6px;
+      width: 3px; border-radius: 2px; background: transparent;
+      transition: background 0.2s;
+    }
+    .emp-row.s-L::before { background: var(--late); }
+    .emp-row.s-A::before { background: var(--absent); }
+    .emp-row.s-S::before { background: var(--sick); }
+    .emp-row.s-V::before { background: var(--vacation); }
+
+    /* Avatar */
     .emp-avatar {
-      width: 38px; height: 38px; border-radius: 50%;
+      width: 28px; height: 28px; border-radius: 50%;
       background: var(--border); flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 700; font-family: 'DM Mono', monospace;
-      overflow: hidden; border: 2px solid var(--border);
+      font-size: 10px; font-weight: 600; color: var(--sub);
+      overflow: hidden; border: 1.5px solid var(--border);
+      transition: border-color 0.2s;
     }
-    .emp-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .emp-avatar.status-L { border-color: var(--late); }
-    .emp-avatar.status-A { border-color: var(--absent); }
-    .emp-avatar.status-S { border-color: var(--sick); }
-    .emp-avatar.status-V { border-color: var(--vacation); }
+    .emp-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .emp-row.s-L .emp-avatar { border-color: var(--late); }
+    .emp-row.s-A .emp-avatar { border-color: var(--absent); }
+    .emp-row.s-S .emp-avatar { border-color: var(--sick); }
+    .emp-row.s-V .emp-avatar { border-color: var(--vacation); }
 
-    .emp-info { flex: 1; min-width: 0; }
-    .emp-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .emp-status-badge {
-      font-size: 10px; font-family: 'DM Mono', monospace;
-      padding: 2px 7px; border-radius: 20px; font-weight: 600;
-      display: none;
+    /* Name */
+    .emp-name {
+      font-size: 13px; font-weight: 500; color: var(--text);
+      flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      min-width: 0;
     }
-    .emp-status-badge.show { display: inline-block; margin-top: 3px; }
-    .badge-L { background: var(--late);    color: #000; }
-    .badge-A { background: var(--absent);  color: #fff; }
-    .badge-S { background: var(--sick);    color: #fff; }
-    .badge-V { background: var(--vacation);color: #000; }
 
-    /* ── Status buttons row ── */
-    .status-buttons {
-      display: grid; grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr; gap: 4px; width: 100%;
+    /* LASV counters — only non-zero shown */
+    .emp-counters {
+      display: flex; gap: 6px; align-items: center;
+      flex-shrink: 0; font-size: 11px; color: var(--sub);
+      white-space: nowrap;
     }
-    .status-btn {
-      padding: 8px 4px; border-radius: 7px;
-      border: 1px solid var(--border); background: var(--surface);
-      color: var(--sub); font-size: 11px; font-family: 'DM Mono', monospace;
-      font-weight: 500; cursor: pointer; transition: all 0.15s;
-      text-align: center; white-space: nowrap; width: 100%;
-    }
-    .status-btn:hover { border-color: var(--sub); color: var(--text); }
-    .status-btn.active-L { background: var(--late);    border-color: var(--late);    color: #000; font-weight: 700; }
-    .status-btn.active-A { background: var(--absent);  border-color: var(--absent);  color: #fff; font-weight: 700; }
-    .status-btn.active-S { background: var(--sick);    border-color: var(--sick);    color: #fff; font-weight: 700; }
-    .status-btn.active-V { background: var(--vacation);border-color: var(--vacation);color: #000; font-weight: 700; }
-    .status-btn[data-s="L"]:hover:not([class*="active"]) { background:#2a2000; border-color:var(--late);    color:var(--late);    }
-    .status-btn[data-s="A"]:hover:not([class*="active"]) { background:#2a0000; border-color:var(--absent);  color:var(--absent);  }
-    .status-btn[data-s="S"]:hover:not([class*="active"]) { background:#1a0a2a; border-color:var(--sick);    color:var(--sick);    }
-    .status-btn[data-s="V"]:hover:not([class*="active"]) { background:#002a18; border-color:var(--vacation);color:var(--vacation);}
+    .ctr { display: flex; align-items: center; gap: 2px; }
+    .ctr-val { font-weight: 600; }
+    .ctr-L .ctr-val { color: var(--late); }
+    .ctr-A .ctr-val { color: var(--absent); }
+    .ctr-S .ctr-val { color: var(--sick); }
+    .ctr-V .ctr-val { color: var(--vacation); }
 
-    /* ── Actions ── */
-    .actions { display: flex; gap: 8px; margin-top: 4px; }
-    .btn-submit {
-      flex: 1; padding: 12px; background: var(--accent); color: #fff;
-      border: none; border-radius: var(--radius);
-      font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 700;
-      cursor: pointer; transition: opacity 0.2s, transform 0.1s;
+    /* Dropdown */
+    .emp-dropdown {
+      flex-shrink: 0;
+      position: relative;
     }
-    .btn-submit:hover { opacity: 0.88; transform: translateY(-1px); }
-    .btn-submit:active { transform: translateY(0); }
-    .btn-submit:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
-    .btn-secondary {
-      padding: 12px 14px; background: transparent; color: var(--sub);
-      border: 1px solid var(--border); border-radius: var(--radius);
-      font-family: 'Sora', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s;
+    .status-select {
+      appearance: none; -webkit-appearance: none;
+      padding: 4px 22px 4px 9px;
+      border-radius: 20px; border: 1px solid var(--border);
+      background: #0d0f14 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237880a0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 7px center;
+      color: var(--present);
+      font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s; min-width: 82px;
     }
-    .btn-secondary:hover { border-color: var(--sub); color: var(--text); }
+    .status-select:focus { outline: none; border-color: #5b8dee; }
 
+    /* Color the select based on value */
+    .status-select.v-P { color: var(--present); border-color: var(--border); }
+    .status-select.v-L { color: var(--late);    border-color: var(--late);    background-color: #1e1a08; }
+    .status-select.v-A { color: var(--absent);  border-color: var(--absent);  background-color: #1e0808; }
+    .status-select.v-S { color: var(--sick);    border-color: var(--sick);    background-color: #13081e; }
+    .status-select.v-V { color: var(--vacation);border-color: var(--vacation);background-color: #081e12; }
+
+    /* ── Footer ── */
+    .footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px 12px; margin-top: 6px;
+      border-top: 1px solid var(--border);
+    }
+    .footer-counts {
+      display: flex; gap: 10px; font-size: 11px;
+    }
+    .fc { display: flex; align-items: center; gap: 3px; font-weight: 500; }
+    .fc-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    .footer-actions { display: flex; gap: 6px; }
+
+    /* ── Status message ── */
     .status-msg {
-      text-align: center; font-size: 12px; font-family: 'DM Mono', monospace;
-      margin-top: 10px; min-height: 18px; color: var(--vacation);
+      text-align: center; font-size: 11px; font-family: monospace;
+      padding: 4px 12px 10px; min-height: 20px; color: var(--vacation);
     }
     .status-msg.error { color: var(--absent); }
 
-    .emp-count {
-      font-size: 10px; color: var(--sub); font-family: 'DM Mono', monospace;
-      margin-bottom: 8px; text-align: right;
+    /* ── Divider between employees ── */
+    .emp-divider {
+      height: 1px; background: var(--border); opacity: 0.4;
+      margin: 0 8px 3px;
     }
   </style>
 </head>
 <body>
-<div id="app"><div class="state-box"><div class="spinner"></div>Initializing...</div></div>
+<div id="app"><div class="state"><div class="spinner"></div>Loading...</div></div>
 
 <script>
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  CONFIG
-// ═══════════════════════════════════════════════════════════
-const CONFIG = {
-  TRELLO_API_KEY:     '53abc1f4686798eadbeb8f91ea79c9bb',
-  LOG_BOARD_ID:       '6965633f4fe5254c47e38527',
-  SLACK_WEBHOOK:      'SLACK_WEBHOOK_PLACEHOLDER',  // injected at deploy time — never hardcoded
-  EMPLOYEE_LIST_NAME: '2026 Employee',  // exact name of the list on your hidden board
+// ════════════════════════════════════════════════════════
+const CFG = {
+  API_KEY:        '53abc1f4686798eadbeb8f91ea79c9bb',
+  LOG_BOARD_ID:   '6965633f4fe5254c47e38527',
+  SLACK_WEBHOOK:  'SLACK_WEBHOOK_PLACEHOLDER',
+  EMP_LIST_NAME:  '2026 Employee',
+  LOG_LIST_NAME:  '', // set to current year automatically
 };
 
-// ═══════════════════════════════════════════════════════════
-//  Constants
-// ═══════════════════════════════════════════════════════════
-const STATUS_MAP = {
-  L: { label: 'Late',     full: 'Late',     emoji: '🕐' },
-  A: { label: 'Absent',   full: 'Absent',   emoji: '❌' },
-  S: { label: 'Sick',     full: 'Sick',     emoji: '🤒' },
-  V: { label: 'Vacation', full: 'Vacation', emoji: '🌴' },
+const STATUS = {
+  P: { label: 'Present',  emoji: '',   color: 'var(--present)' },
+  L: { label: 'Late',     emoji: '🕐', color: 'var(--late)'    },
+  A: { label: 'Absent',   emoji: '❌', color: 'var(--absent)'  },
+  S: { label: 'Sick',     emoji: '🤒', color: 'var(--sick)'    },
+  V: { label: 'Vacation', emoji: '🌴', color: 'var(--vacation)'},
 };
 
-function todayFormatted() {
-  return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+// ════════════════════════════════════════════════════════
+//  State
+// ════════════════════════════════════════════════════════
+let t            = null;
+let token        = null;
+let employees    = [];    // [{ name, photo, counters:{L,A,S,V}, cardId }]
+let selections   = {};    // { name: 'P'|'L'|'A'|'S'|'V' }  default P
+let submitted    = false;
+
+function today() {
+  return new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
 }
-function currentYear() { return new Date().getFullYear().toString(); }
+function year() { return new Date().getFullYear().toString(); }
 
-// ═══════════════════════════════════════════════════════════
-//  App State
-// ═══════════════════════════════════════════════════════════
-let t            = null;   // Trello iframe context
-let trelloToken  = null;
-let employees    = [];     // string[]  — loaded from hidden board
-let attendance   = {};     // { name: 'L'|'A'|'S'|'V'|null }
-
-// ═══════════════════════════════════════════════════════════
-//  Trello API helper
-// ═══════════════════════════════════════════════════════════
-async function api(path, method = 'GET', body = null) {
+// ════════════════════════════════════════════════════════
+//  Trello API
+// ════════════════════════════════════════════════════════
+async function api(path, method='GET', body=null) {
   const sep = path.includes('?') ? '&' : '?';
-  const url = `https://api.trello.com/1${path}${sep}key=${CONFIG.TRELLO_API_KEY}&token=${trelloToken}`;
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  const url = `https://api.trello.com/1${path}${sep}key=${CFG.API_KEY}&token=${token}`;
+  const opts = { method, headers:{'Content-Type':'application/json'} };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(url, opts);
   if (!res.ok) throw new Error(`Trello ${res.status}: ${await res.text()}`);
   return res.json();
 }
 
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  Load employees from "2026 Employee" list
-// ═══════════════════════════════════════════════════════════
+//  Also pre-loads their LASV counters from the log list
+// ════════════════════════════════════════════════════════
 async function loadEmployees() {
-  setLoading('Fetching employee list from Trello...');
-  const lists = await api(`/boards/${CONFIG.LOG_BOARD_ID}/lists`);
-  const empList = lists.find(l => l.name.trim().toLowerCase() === CONFIG.EMPLOYEE_LIST_NAME.toLowerCase());
+  setState('loading', 'Fetching employee list...');
 
+  // Get all lists on hidden board
+  const lists = await api(`/boards/${CFG.LOG_BOARD_ID}/lists`);
+
+  // Find employee roster list
+  const empList = lists.find(l =>
+    l.name.trim().toLowerCase() === CFG.EMP_LIST_NAME.toLowerCase()
+  );
   if (!empList) throw new Error(
-    `Could not find a list named "${CONFIG.EMPLOYEE_LIST_NAME}" on your hidden board.\n` +
-    `Go to your hidden board → create a list called exactly "${CONFIG.EMPLOYEE_LIST_NAME}" → add one card per employee.`
+    `List "${CFG.EMP_LIST_NAME}" not found on your hidden board.`
   );
 
+  // Find or note log list for this year
+  const logList = lists.find(l => l.name.trim() === year());
+  const logCards = logList
+    ? await api(`/lists/${logList.id}/cards?fields=name,desc`)
+    : [];
+
+  // Build counter lookup from log cards
+  const counterMap = {};
+  logCards.forEach(c => {
+    counterMap[c.name.trim().toLowerCase()] = parseDesc(c.desc);
+  });
+
+  // Fetch employee cards with cover images
   const cards = await api(`/lists/${empList.id}/cards?fields=name,cover`);
   if (!cards.length) throw new Error(
-    `The "${CONFIG.EMPLOYEE_LIST_NAME}" list has no cards.\n` +
-    `Add one card per employee (the card title = the employee name).`
+    `No employee cards found in "${CFG.EMP_LIST_NAME}".`
   );
 
   employees = cards
-    .map(c => ({
-      name: c.name.trim(),
-      photo: c.cover && c.cover.scaled
-        ? c.cover.scaled.find(s => s.width >= 70)?.url || c.cover.scaled[0]?.url || null
-        : null,
-    }))
+    .map(c => {
+      const name = c.name.trim();
+      const photo = c.cover?.scaled
+        ? (c.cover.scaled.find(s => s.width >= 70)?.url || c.cover.scaled[0]?.url || null)
+        : null;
+      const counters = counterMap[name.toLowerCase()] || {L:0,A:0,S:0,V:0};
+      return { name, photo, counters };
+    })
     .filter(e => e.name)
     .sort((a,b) => a.name.localeCompare(b.name));
-  attendance = {};
-  employees.forEach(e => attendance[e.name] = null);
+
+  // Default everyone to Present
+  selections = {};
+  employees.forEach(e => selections[e.name] = 'P');
 }
 
-// ═══════════════════════════════════════════════════════════
-//  UI helpers
-// ═══════════════════════════════════════════════════════════
-function setLoading(msg) {
-  document.getElementById('app').innerHTML =
-    `<div class="state-box"><div class="spinner"></div>${msg}</div>`;
-}
-
-function setError(msg) {
-  document.getElementById('app').innerHTML =
-    `<div class="state-box error">⚠️ ${msg.replace(/\n/g, '<br/>')}</div>
-     <div style="text-align:center;margin-top:12px">
-       <button class="btn-secondary" onclick="init()">↺ Retry</button>
-     </div>`;
-}
-
-function setAuthScreen() {
-  document.getElementById('app').innerHTML = `
-    <div class="header">
-      <div class="header-icon">📋</div>
-      <div><div class="header-title">Daily Attendance</div><div class="header-date">${todayFormatted()}</div></div>
-    </div>
-    <div class="auth-box">
-      <p style="margin-bottom:12px;font-size:12px;line-height:1.7">
-        <strong>Step 1:</strong> Click the link below to get your token (opens new tab):<br/>
-        <a href="https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&key=53abc1f4686798eadbeb8f91ea79c9bb&name=CF+Daily+Attendance" target="_blank" style="color:#4f8ef7">→ Get Trello Token</a>
-      </p>
-      <p style="margin-bottom:8px;font-size:12px"><strong>Step 2:</strong> Copy the token, paste it here:</p>
-      <textarea id="tokenPaste" style="width:100%;height:70px;padding:8px;border-radius:8px;border:1px solid #2a2d3e;background:#0f1117;color:#e2e8f0;font-family:monospace;font-size:11px;resize:none;margin-bottom:10px" placeholder="Paste token here (starts with ATTA...)"></textarea>
-      <button class="btn-submit" style="width:100%" onclick="saveTokenFromPaste()">💾 Save & Continue</button>
-      <div id="authMsg" style="font-size:11px;color:#ef4444;margin-top:8px;min-height:16px;font-family:monospace"></div>
-    </div>`;
-}
-
-async function saveTokenFromPaste() {
-  const token = document.getElementById('tokenPaste').value.trim();
-  const msg   = document.getElementById('authMsg');
-  if (!token) { msg.textContent = 'Please paste your token first.'; return; }
-  if (token.length < 40) { msg.textContent = 'Token looks too short — copy the whole thing.'; return; }
-  msg.style.color = '#64748b';
-  msg.textContent = 'Saving...';
-  try {
-    await t.set('member', 'private', 'token', token);
-    trelloToken = token;
-    await init();
-  } catch(e) {
-    msg.style.color = '#ef4444';
-    msg.textContent = 'Error saving: ' + e.message;
-  }
-}
-
+// ════════════════════════════════════════════════════════
+//  Render
+// ════════════════════════════════════════════════════════
 function render() {
-  const TODAY = todayFormatted();
-  const counts = { present:0, L:0, A:0, S:0, V:0 };
-  employees.forEach(e => { const s = attendance[e.name]; if(s) counts[s]++; else counts.present++; });
+  const DATE = today();
+
+  // Count summary
+  const counts = {P:0,L:0,A:0,S:0,V:0};
+  employees.forEach(e => counts[selections[e.name]]++);
+
+  const rows = employees.map((emp, i) => {
+    const sel      = selections[emp.name];
+    const initials = emp.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const avatarInner = emp.photo
+      ? `<img src="${emp.photo}" alt="" onerror="this.style.display='none';this.insertAdjacentText('afterend','${initials}')">`
+      : initials;
+
+    // Build counters — only show non-zero
+    const { L,A,S,V } = emp.counters;
+    const ctrParts = [
+      L ? `<span class="ctr ctr-L"><span class="ctr-val">${L}</span>🕐</span>` : '',
+      A ? `<span class="ctr ctr-A"><span class="ctr-val">${A}</span>❌</span>` : '',
+      S ? `<span class="ctr ctr-S"><span class="ctr-val">${S}</span>🤒</span>` : '',
+      V ? `<span class="ctr ctr-V"><span class="ctr-val">${V}</span>🌴</span>` : '',
+    ].filter(Boolean).join('');
+
+    const divider = i < employees.length-1 ? '<div class="emp-divider"></div>' : '';
+
+    return `
+      <div class="emp-row${sel !== 'P' ? ' s-'+sel : ''}" id="row-${i}">
+        <div class="emp-avatar">${avatarInner}</div>
+        <div class="emp-name">${emp.name}</div>
+        ${ctrParts ? `<div class="emp-counters">${ctrParts}</div>` : ''}
+        <div class="emp-dropdown">
+          <select class="status-select v-${sel}"
+            onchange="setStatus(${JSON.stringify(emp.name)}, this.value, this)"
+            ${submitted ? 'disabled' : ''}>
+            <option value="P"${sel==='P'?' selected':''}>Present</option>
+            <option value="L"${sel==='L'?' selected':''}>Late</option>
+            <option value="A"${sel==='A'?' selected':''}>Absent</option>
+            <option value="S"${sel==='S'?' selected':''}>Sick</option>
+            <option value="V"${sel==='V'?' selected':''}>Vacation</option>
+          </select>
+        </div>
+      </div>
+      ${divider}`;
+  }).join('');
 
   document.getElementById('app').innerHTML = `
-    <div class="header">
-      <div class="header-icon">📋</div>
-      <div><div class="header-title">Daily Attendance</div><div class="header-date">${TODAY}</div></div>
-      <button class="header-refresh" onclick="refreshList()" title="Reload employee list">↺ Refresh</button>
+    <div class="hdr">
+      <div class="hdr-left">
+        <span class="hdr-title">Attendance</span>
+        <span class="hdr-date">${DATE}</span>
+      </div>
+      <div class="hdr-right">
+        <button class="btn-sm" onclick="refreshAll()" title="Reload employees">↺</button>
+        ${!submitted
+          ? `<button class="btn-sm" onclick="resetAll()">Reset</button>
+             <button class="btn-sm primary" onclick="submitAttendance()" id="submitBtn">Submit</button>`
+          : `<span style="font-size:11px;color:var(--vacation)">✓ Submitted</span>`
+        }
+      </div>
     </div>
 
-    <div class="summary-row">
-      <div class="summary-pill"><span class="count" style="color:#5b8dee">${counts.present}</span><span class="label">PRESENT</span></div>
-      <div class="summary-pill"><span class="count" style="color:#f0a500">${counts.L}</span><span class="label">LATE</span></div>
-      <div class="summary-pill"><span class="count" style="color:#e84545">${counts.A}</span><span class="label">ABSENT</span></div>
-      <div class="summary-pill"><span class="count" style="color:#9b59f5">${counts.S}</span><span class="label">SICK</span></div>
-      <div class="summary-pill"><span class="count" style="color:#11c987">${counts.V}</span><span class="label">VACATION</span></div>
-    </div>
+    <div class="emp-list">${rows}</div>
 
-    <div class="emp-count">${employees.length} employees loaded</div>
-
-    <div class="employee-list">
-      ${employees.map((emp, i) => {
-        const s   = attendance[emp.name];
-        const initials = emp.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
-        const firstName = emp.name.split(' ')[0];
-        const avatarContent = emp.photo
-          ? `<img src="${emp.photo}" alt="${firstName}" onerror="this.style.display='none';this.parentNode.textContent='${initials}'">`
-          : initials;
-        const badgeClass = s ? `emp-status-badge show badge-${s}` : 'emp-status-badge';
-        const badgeText  = s ? STATUS_MAP[s].full : '';
-        return `
-        <div class="employee-row${s ? ' status-'+s : ''}" style="animation-delay:${(i+1)*0.03}s">
-          <div class="emp-top">
-            <div class="emp-avatar${s ? ' status-'+s : ''}">${avatarContent}</div>
-            <div class="emp-info">
-              <div class="emp-name">${emp.name}</div>
-              <span class="${badgeClass}">${badgeText}</span>
-            </div>
-          </div>
-          <div class="status-buttons">
-            ${Object.entries(STATUS_MAP).map(([k,v]) =>
-              `<button class="status-btn${s===k ? ' active-'+k : ''}" data-s="${k}"
-                onclick="toggle(${JSON.stringify(emp.name)},${JSON.stringify(k)})">${v.emoji} ${v.full}</button>`
-            ).join('')}
-          </div>
-        </div>`;
-      }).join('')}
-    </div>
-
-    <div class="actions">
-      <button class="btn-secondary" onclick="resetAll()">Reset</button>
-      <button class="btn-submit" onclick="submit()" id="submitBtn">✓ Submit Attendance</button>
+    <div class="footer">
+      <div class="footer-counts">
+        <span class="fc"><span class="fc-dot" style="background:#5b8dee"></span>${counts.P}</span>
+        ${counts.L ? `<span class="fc" style="color:var(--late)">🕐 ${counts.L}</span>` : ''}
+        ${counts.A ? `<span class="fc" style="color:var(--absent)">❌ ${counts.A}</span>` : ''}
+        ${counts.S ? `<span class="fc" style="color:var(--sick)">🤒 ${counts.S}</span>` : ''}
+        ${counts.V ? `<span class="fc" style="color:var(--vacation)">🌴 ${counts.V}</span>` : ''}
+      </div>
+      <span style="font-size:10px;color:var(--sub)">${employees.length} employees</span>
     </div>
     <div class="status-msg" id="statusMsg"></div>
   `;
 
-  // Tell Trello to resize the popup to fit all content
-  if (t) {
-    const h = document.getElementById('app').scrollHeight + 30;
-    t.sizeTo('#app').catch(()=>{});
-  }
+  // Resize iframe to fit content
+  if (t) t.sizeTo('#app').catch(()=>{});
 }
 
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  Interactions
-// ═══════════════════════════════════════════════════════════
-function toggle(name, status) {
-  attendance[name] = attendance[name] === status ? null : status;
+// ════════════════════════════════════════════════════════
+function setStatus(name, val, selectEl) {
+  selections[name] = val;
+  // Update select color class
+  selectEl.className = `status-select v-${val}`;
+  // Update row accent
+  const rows = document.querySelectorAll('.emp-row');
+  rows.forEach(row => {
+    const nameEl = row.querySelector('.emp-name');
+    if (nameEl && nameEl.textContent === name) {
+      row.className = `emp-row${val !== 'P' ? ' s-'+val : ''}`;
+    }
+  });
+  // Update footer counts
+  updateFooterCounts();
+  if (t) t.sizeTo('#app').catch(()=>{});
+}
+
+function updateFooterCounts() {
+  const counts = {P:0,L:0,A:0,S:0,V:0};
+  employees.forEach(e => counts[selections[e.name]]++);
+  const fc = document.querySelector('.footer-counts');
+  if (!fc) return;
+  fc.innerHTML = `
+    <span class="fc"><span class="fc-dot" style="background:#5b8dee"></span>${counts.P}</span>
+    ${counts.L ? `<span class="fc" style="color:var(--late)">🕐 ${counts.L}</span>` : ''}
+    ${counts.A ? `<span class="fc" style="color:var(--absent)">❌ ${counts.A}</span>` : ''}
+    ${counts.S ? `<span class="fc" style="color:var(--sick)">🤒 ${counts.S}</span>` : ''}
+    ${counts.V ? `<span class="fc" style="color:var(--vacation)">🌴 ${counts.V}</span>` : ''}
+  `;
+}
+
+function resetAll() {
+  employees.forEach(e => selections[e.name] = 'P');
   render();
 }
-function resetAll() { employees.forEach(e => attendance[e.name] = null); render(); }
-async function refreshList() {
-  try { await loadEmployees(); render(); } catch(e) { setError(e.message); }
+
+async function refreshAll() {
+  try {
+    await loadEmployees();
+    submitted = false;
+    render();
+  } catch(e) { setState('error', e.message); }
 }
 
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  Submit
-// ═══════════════════════════════════════════════════════════
-async function submit() {
+// ════════════════════════════════════════════════════════
+async function submitAttendance() {
   const btn = document.getElementById('submitBtn');
   const msg = document.getElementById('statusMsg');
-  btn.disabled = true; msg.textContent = ''; msg.className = 'status-msg';
+  if (btn) btn.disabled = true;
+  if (msg) { msg.textContent = 'Submitting...'; msg.className = 'status-msg'; }
 
   try {
+    // Get or create year log list
     const logListId = await getOrCreateLogList();
-    const flagged   = employees.filter(e => attendance[e.name]).map(e => e.name);
 
-    for (const name of flagged) {
-      btn.textContent = `Logging ${name}...`;
-      await logEmployee(logListId, name, attendance[name]);
+    // Log each non-present employee
+    const flagged = employees.filter(e => selections[e.name] !== 'P');
+    for (const emp of flagged) {
+      if (msg) msg.textContent = `Logging ${emp.name}...`;
+      await logEmployee(logListId, emp, selections[emp.name]);
     }
 
-    btn.textContent = 'Notifying Slack...';
+    // Send Slack summary
+    if (msg) msg.textContent = 'Notifying Slack...';
     await sendSlack();
 
-    msg.textContent = `✓ Done! ${flagged.length} employee(s) logged. Slack notified.`;
+    submitted = true;
+    render();
+    const m = document.getElementById('statusMsg');
+    if (m) {
+      m.textContent = `✓ ${flagged.length} logged · Slack notified`;
+      m.className = 'status-msg';
+    }
+
   } catch(e) {
     console.error(e);
-    msg.textContent = '✗ ' + e.message;
-    msg.className = 'status-msg error';
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '✓ Submit Attendance';
+    const m = document.getElementById('statusMsg');
+    if (m) { m.textContent = '✗ ' + e.message; m.className = 'status-msg error'; }
+    if (btn) btn.disabled = false;
   }
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Trello log helpers
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+//  Log helpers
+// ════════════════════════════════════════════════════════
 async function getOrCreateLogList() {
-  const YEAR  = currentYear();
-  const lists = await api(`/boards/${CONFIG.LOG_BOARD_ID}/lists`);
-  let list = lists.find(l => l.name === YEAR);
-  if (!list) list = await api('/lists', 'POST', { name: YEAR, idBoard: CONFIG.LOG_BOARD_ID });
+  const YEAR  = year();
+  const lists = await api(`/boards/${CFG.LOG_BOARD_ID}/lists`);
+  let list = lists.find(l => l.name.trim() === YEAR);
+  if (!list) list = await api('/lists','POST',{ name:YEAR, idBoard:CFG.LOG_BOARD_ID });
   return list.id;
 }
 
-async function logEmployee(logListId, name, statusKey) {
-  const TODAY = todayFormatted();
-  const cards = await api(`/lists/${logListId}/cards`);
-  let card = cards.find(c => c.name.toLowerCase() === name.toLowerCase());
+async function logEmployee(logListId, emp, statusKey) {
+  const DATE   = today();
+  const status = STATUS[statusKey];
+
+  // Find or create employee card in log list
+  const cards = await api(`/lists/${logListId}/cards?fields=name,desc`);
+  let card = cards.find(c => c.name.trim().toLowerCase() === emp.name.toLowerCase());
 
   if (!card) {
-    card = await api('/cards', 'POST', {
-      name,
+    card = await api('/cards','POST',{
+      name:   emp.name,
       idList: logListId,
-      desc: buildDesc({ L:0, A:0, S:0, V:0 }),
+      desc:   buildDesc({L:0,A:0,S:0,V:0}),
     });
   }
 
+  // Update counters in description
   const counters = parseDesc(card.desc);
-  counters[statusKey] = (counters[statusKey] || 0) + 1;
-  await api(`/cards/${card.id}`, 'PUT', { desc: buildDesc(counters) });
-  await api(`/cards/${card.id}/actions/comments`, 'POST', {
-    text: `${TODAY} — ${STATUS_MAP[statusKey].full}`,
+  counters[statusKey]++;
+  await api(`/cards/${card.id}`,'PUT',{ desc: buildDesc(counters) });
+
+  // Add comment: "Employee Name — Late — Feb 24, 2026"
+  await api(`/cards/${card.id}/actions/comments`,'POST',{
+    text: `${emp.name} — ${status.label} — ${DATE}`,
   });
+
+  // Update local counter for UI
+  emp.counters[statusKey] = (emp.counters[statusKey] || 0) + 1;
 }
 
 function buildDesc(c) {
@@ -476,102 +517,116 @@ function buildDesc(c) {
 }
 
 function parseDesc(desc) {
-  const d = { L:0, A:0, S:0, V:0 };
+  const d = {L:0,A:0,S:0,V:0};
   if (!desc) return d;
   const m = desc.match(/\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|/);
   if (m) { d.L=+m[1]; d.A=+m[2]; d.S=+m[3]; d.V=+m[4]; }
   return d;
 }
 
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 //  Slack
-// ═══════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
 async function sendSlack() {
-  const TODAY = todayFormatted();
-  const present  = employees.filter(e => !attendance[e.name]).map(e => e.name);
-  const late     = employees.filter(e => attendance[e.name]==='L').map(e => e.name);
-  const absent   = employees.filter(e => attendance[e.name]==='A').map(e => e.name);
-  const sick     = employees.filter(e => attendance[e.name]==='S').map(e => e.name);
-  const vacation = employees.filter(e => attendance[e.name]==='V').map(e => e.name);
-  const line = (e,l,arr) => arr.length ? `${e} *${l}* (${arr.length}): ${arr.join(', ')}` : null;
+  const DATE    = today();
+  const present  = employees.filter(e => selections[e.name]==='P').map(e=>e.name);
+  const late     = employees.filter(e => selections[e.name]==='L').map(e=>e.name);
+  const absent   = employees.filter(e => selections[e.name]==='A').map(e=>e.name);
+  const sick     = employees.filter(e => selections[e.name]==='S').map(e=>e.name);
+  const vacation = employees.filter(e => selections[e.name]==='V').map(e=>e.name);
+
+  const section = (emoji, label, names) =>
+    names.length ? `${emoji} *${label}* (${names.length})\n${names.map(n=>`• ${n}`).join('\n')}` : null;
 
   const text = [
-    `📋 *Daily Attendance — ${TODAY}*`, '',
-    line('✅','Present',present), line('🕐','Late',late),
-    line('❌','Absent',absent),   line('🤒','Sick',sick),
-    line('🌴','Vacation',vacation),
-  ].filter(l => l!==null).join('\n');
+    `📋 *Daily Attendance — ${DATE}*`,
+    `_${employees.length} employees · ${present.length} present today_`,
+    '',
+    section('✅', 'Present',  present),
+    section('🕐', 'Late',     late),
+    section('❌', 'Absent',   absent),
+    section('🤒', 'Sick',     sick),
+    section('🌴', 'Vacation', vacation),
+  ].filter(l => l !== null).join('\n');
 
-  await fetch(CONFIG.SLACK_WEBHOOK, {
+  await fetch(CFG.SLACK_WEBHOOK, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ text }),
   });
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Authorization (one-time popup)
-// ═══════════════════════════════════════════════════════════
-async function doAuthorize() {
-  const authUrl =
-    `https://trello.com/1/authorize?expiration=never&scope=read,write` +
-    `&response_type=token&key=${CONFIG.TRELLO_API_KEY}&name=Daily+Attendance`;
-
-  const popup = window.open(authUrl, 'trello-auth', 'width=500,height=600,left=200,top=100');
-
-  window.addEventListener('message', async function handler(e) {
-    if (typeof e.data === 'string' && e.data.length === 64) {
-      window.removeEventListener('message', handler);
-      trelloToken = e.data;
-      try { await t.set('member', 'private', 'token', trelloToken); } catch(_) {}
-      if (popup && !popup.closed) popup.close();
-      await init();
-    }
-  });
+// ════════════════════════════════════════════════════════
+//  Auth screen
+// ════════════════════════════════════════════════════════
+function showAuth() {
+  document.getElementById('app').innerHTML = `
+    <div class="auth-screen">
+      <p><strong>One-time setup</strong> — get your Trello token:</p>
+      <p>
+        <a href="https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&key=${CFG.API_KEY}&name=CF+Daily+Attendance" target="_blank">
+          → Open Trello Authorization Page
+        </a><br/>
+        Click <strong>Allow</strong>, then copy and paste the token below:
+      </p>
+      <textarea class="auth-textarea" id="tokenInput" placeholder="Paste token here (starts with ATTA...)"></textarea>
+      <button class="btn-sm primary" style="width:100%;padding:8px" onclick="saveToken()">Save Token</button>
+      <div id="authMsg" style="font-size:11px;color:var(--absent);margin-top:6px;min-height:14px;font-family:monospace"></div>
+    </div>`;
+  if (t) t.sizeTo('#app').catch(()=>{});
 }
 
-// ═══════════════════════════════════════════════════════════
-//  Boot
-// ═══════════════════════════════════════════════════════════
-async function init() {
-  setLoading('Initializing...');
+async function saveToken() {
+  const val = document.getElementById('tokenInput')?.value.trim();
+  const msg = document.getElementById('authMsg');
+  if (!val) { if(msg) msg.textContent='Paste your token first.'; return; }
+  if (val.length < 40) { if(msg) msg.textContent='Token too short — copy the whole thing.'; return; }
   try {
-    t = window.TrelloPowerUp.iframe({
-      appKey:  CONFIG.TRELLO_API_KEY,
-      appName: 'Daily Attendance',
-    });
+    await t.set('member','private','token', val);
+    token = val;
+    await boot();
+  } catch(e) {
+    if(msg) msg.textContent = 'Error: ' + e.message;
+  }
+}
 
-    trelloToken = await t.get('member', 'private', 'token');
+// ════════════════════════════════════════════════════════
+//  UI state helpers
+// ════════════════════════════════════════════════════════
+function setState(type, msg) {
+  document.getElementById('app').innerHTML = type === 'loading'
+    ? `<div class="state"><div class="spinner"></div>${msg}</div>`
+    : `<div class="state error">⚠️ ${msg}<br/><br/><button class="btn-sm" onclick="boot()">↺ Retry</button></div>`;
+  if (t) t.sizeTo('#app').catch(()=>{});
+}
 
-    // Fallback: check localStorage (stored by setup.html)
-    if (!trelloToken) {
-      const lsToken = localStorage.getItem('trello_attendance_token');
-      if (lsToken) {
-        await t.set('member', 'private', 'token', lsToken);
-        localStorage.removeItem('trello_attendance_token');
-        trelloToken = lsToken;
-      }
+// ════════════════════════════════════════════════════════
+//  Boot
+// ════════════════════════════════════════════════════════
+async function boot() {
+  setState('loading', 'Initializing...');
+  try {
+    if (!t) {
+      t = window.TrelloPowerUp.iframe({
+        appKey:  CFG.API_KEY,
+        appName: 'CF Daily Attendance',
+      });
     }
 
-    if (!trelloToken) {
-      setAuthScreen();
-      return;
-    }
+    token = await t.get('member','private','token');
+    if (!token) { showAuth(); return; }
 
     await loadEmployees();
     render();
 
   } catch(e) {
-    console.error('Boot error:', e);
-    if (!trelloToken) {
-      setAuthScreen();
-    } else {
-      setError(e.message);
-    }
+    console.error(e);
+    if (!token) { showAuth(); return; }
+    setState('error', e.message);
   }
 }
 
-init();
+boot();
 </script>
 </body>
 </html>
