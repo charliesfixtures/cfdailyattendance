@@ -201,15 +201,20 @@ async function loadEmployees() {
   if (!empList) throw new Error(`List "${CFG.EMP_LIST_NAME}" not found on hidden board.`);
 
   // fields=name,cover,desc — cover gives us the photo
-  const cards = await api(`/lists/${empList.id}/cards?fields=name,cover,desc`);
+  const cards = await api(`/lists/${empList.id}/cards?fields=name,cover,desc&attachments=true&attachment_fields=url,previews`);
   if (!cards.length) throw new Error(`No cards found in "${CFG.EMP_LIST_NAME}".`);
 
   employees = cards
     .map(c => {
       const name  = c.name.trim();
-      const photo = c.cover?.scaled
-        ? (c.cover.scaled.find(s => s.width >= 70)?.url || c.cover.scaled[0]?.url || null)
-        : null;
+      // Try cover scaled previews first, then fall back to first attachment
+      let photo = null;
+      if (c.cover?.scaled?.length) {
+        photo = c.cover.scaled.find(s => s.width >= 70)?.url || c.cover.scaled[0]?.url || null;
+      } else if (c.cover?.idAttachment && c.attachments?.length) {
+        const att = c.attachments.find(a => a.id === c.cover.idAttachment);
+        photo = att?.previews?.find(p => p.width >= 70)?.url || att?.url || null;
+      }
       const counters = parseDesc(c.desc);
       return { name, photo, counters, cardId: c.id };
     })
@@ -284,8 +289,8 @@ function render() {
     const sel      = selections[emp.name];
     const initials = emp.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     const avatarInner = emp.photo
-      ? `<img src="${emp.photo}" alt="" onerror="this.style.display='none'">${initials}`
-      : initials;
+      ? `<img src="${emp.photo}" alt="${initials}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.outerHTML='<span>${initials}</span>'">`
+      : `<span>${initials}</span>`;
 
     const { L, A, S, V } = emp.counters;
     const ctrParts = [
