@@ -10,165 +10,187 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --border: #2a2d3e;
-      --accent: #4f8ef7;
-      --late: #f59e0b;
-      --absent: #ef4444;
-      --sick: #a855f7;
-      --vacation: #10b981;
-      --text: #e2e8f0;
-      --muted: #64748b;
-      --radius: 10px;
+      --bg:      #0d0f14;
+      --surface: #161920;
+      --card:    #1e2130;
+      --border:  #2d3148;
+      --accent:  #5b8dee;
+      --late:    #f0a500;
+      --absent:  #e84545;
+      --sick:    #9b59f5;
+      --vacation:#11c987;
+      --text:    #eef0f6;
+      --sub:     #8b91a8;
+      --radius:  12px;
     }
 
     body {
       font-family: 'Sora', sans-serif;
       background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
-      padding: 16px;
+      padding: 14px;
     }
 
+    /* ── Header ── */
     .header {
-      display: flex; align-items: center; gap: 12px;
-      margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 14px; padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
     }
     .header-icon {
-      width: 34px; height: 34px; background: var(--accent);
+      width: 32px; height: 32px; background: var(--accent);
       border-radius: 8px; display: flex; align-items: center;
-      justify-content: center; font-size: 17px; flex-shrink: 0;
+      justify-content: center; font-size: 16px; flex-shrink: 0;
     }
-    .header-title { font-size: 15px; font-weight: 700; }
-    .header-date  { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .header-title { font-size: 14px; font-weight: 700; color: var(--text); }
+    .header-date  { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--sub); margin-top: 1px; }
     .header-refresh {
       margin-left: auto; background: transparent; border: 1px solid var(--border);
-      color: var(--muted); border-radius: 6px; padding: 4px 10px;
+      color: var(--sub); border-radius: 6px; padding: 4px 10px;
       font-size: 11px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.2s;
     }
     .header-refresh:hover { border-color: var(--accent); color: var(--accent); }
 
+    /* ── States ── */
     .state-box {
-      text-align: center; padding: 32px 16px;
-      font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted); line-height: 1.7;
+      text-align: center; padding: 40px 16px;
+      font-family: 'DM Mono', monospace; font-size: 13px; color: var(--sub); line-height: 1.7;
     }
     .state-box.error { color: var(--absent); }
-    .state-box .hint { font-size: 11px; color: var(--muted); margin-top: 8px; }
-
     .spinner {
-      width: 28px; height: 28px;
-      border: 3px solid var(--border); border-top-color: var(--accent);
-      border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px;
+      width: 26px; height: 26px; border: 3px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 14px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── Auth box ── */
     .auth-box {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 20px; text-align: center; margin-top: 20px;
-    }
-    .auth-box p { font-size: 13px; color: var(--muted); margin-bottom: 14px; line-height: 1.6; }
-
-    .legend { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-    .legend-item {
-      display: flex; align-items: center; gap: 5px;
-      font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace;
-    }
-    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
-
-    .emp-count {
-      font-size: 11px; color: var(--muted);
-      font-family: 'DM Mono', monospace; margin-bottom: 10px; text-align: right;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px; margin-top: 16px;
     }
 
-    .employee-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    /* ── Summary pills ── */
+    .summary-row {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 6px; margin-bottom: 12px;
+    }
+    .summary-pill {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 4px;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+    }
+    .summary-pill .count { font-size: 18px; font-weight: 700; line-height: 1; }
+    .summary-pill .label { font-size: 9px; color: var(--sub); font-family: 'DM Mono', monospace; letter-spacing: 0.3px; }
+
+    /* ── Employee list ── */
+    .employee-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
 
     .employee-row {
-      background: var(--surface); border: 1px solid var(--border);
+      background: var(--card); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 10px 12px;
-      display: flex; align-items: center; gap: 10px; transition: border-color 0.2s;
-      animation: fadeIn 0.2s ease both;
+      display: flex; flex-direction: column; gap: 8px;
+      transition: border-color 0.2s; animation: fadeIn 0.2s ease both;
     }
-    .employee-row.status-L { border-color: var(--late); }
-    .employee-row.status-A { border-color: var(--absent); }
-    .employee-row.status-S { border-color: var(--sick); }
-    .employee-row.status-V { border-color: var(--vacation); }
+    .employee-row.status-L { border-color: var(--late);    background: #1e1a0e; }
+    .employee-row.status-A { border-color: var(--absent);  background: #1e0e0e; }
+    .employee-row.status-S { border-color: var(--sick);    background: #170e1e; }
+    .employee-row.status-V { border-color: var(--vacation);background: #0e1e16; }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(5px); }
+      from { opacity: 0; transform: translateY(4px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    .employee-row:nth-child(1)  { animation-delay: 0.02s; }
-    .employee-row:nth-child(2)  { animation-delay: 0.04s; }
-    .employee-row:nth-child(3)  { animation-delay: 0.06s; }
-    .employee-row:nth-child(4)  { animation-delay: 0.08s; }
-    .employee-row:nth-child(5)  { animation-delay: 0.10s; }
-    .employee-row:nth-child(6)  { animation-delay: 0.12s; }
-    .employee-row:nth-child(7)  { animation-delay: 0.14s; }
-    .employee-row:nth-child(8)  { animation-delay: 0.16s; }
-    .employee-row:nth-child(9)  { animation-delay: 0.18s; }
-    .employee-row:nth-child(10) { animation-delay: 0.20s; }
+    .employee-row:nth-child(1)  { animation-delay:.02s }
+    .employee-row:nth-child(2)  { animation-delay:.04s }
+    .employee-row:nth-child(3)  { animation-delay:.06s }
+    .employee-row:nth-child(4)  { animation-delay:.08s }
+    .employee-row:nth-child(5)  { animation-delay:.10s }
+    .employee-row:nth-child(6)  { animation-delay:.12s }
+    .employee-row:nth-child(7)  { animation-delay:.14s }
+    .employee-row:nth-child(8)  { animation-delay:.16s }
+    .employee-row:nth-child(9)  { animation-delay:.18s }
+    .employee-row:nth-child(10) { animation-delay:.20s }
 
-    .employee-avatar {
-      width: 30px; height: 30px; border-radius: 50%;
-      background: var(--border); display: flex; align-items: center;
-      justify-content: center; font-size: 12px; font-weight: 600;
-      flex-shrink: 0; font-family: 'DM Mono', monospace;
+    /* ── Top row: avatar + name + status badge ── */
+    .emp-top {
+      display: flex; align-items: center; gap: 10px;
     }
-    .employee-name {
-      font-size: 13px; font-weight: 600; flex: 1;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    .emp-avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--border); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; font-family: 'DM Mono', monospace;
+      overflow: hidden; border: 2px solid var(--border);
     }
-    .status-buttons { display: flex; gap: 3px; flex-shrink: 0; }
+    .emp-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .emp-avatar.status-L { border-color: var(--late); }
+    .emp-avatar.status-A { border-color: var(--absent); }
+    .emp-avatar.status-S { border-color: var(--sick); }
+    .emp-avatar.status-V { border-color: var(--vacation); }
 
+    .emp-info { flex: 1; min-width: 0; }
+    .emp-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .emp-status-badge {
+      font-size: 10px; font-family: 'DM Mono', monospace;
+      padding: 2px 7px; border-radius: 20px; font-weight: 600;
+      display: none;
+    }
+    .emp-status-badge.show { display: inline-block; margin-top: 3px; }
+    .badge-L { background: var(--late);    color: #000; }
+    .badge-A { background: var(--absent);  color: #fff; }
+    .badge-S { background: var(--sick);    color: #fff; }
+    .badge-V { background: var(--vacation);color: #000; }
+
+    /* ── Status buttons row ── */
+    .status-buttons {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;
+    }
     .status-btn {
-      padding: 3px 8px; border-radius: 5px; border: 1px solid var(--border);
-      background: transparent; color: var(--muted); font-size: 10px;
-      font-family: 'DM Mono', monospace; font-weight: 500;
-      cursor: pointer; transition: all 0.15s; letter-spacing: 0.3px;
+      padding: 7px 4px; border-radius: 7px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--sub); font-size: 11px; font-family: 'DM Mono', monospace;
+      font-weight: 500; cursor: pointer; transition: all 0.15s;
+      text-align: center; white-space: nowrap;
     }
-    .status-btn.active-L { background: var(--late);    border-color: var(--late);    color: #000; }
-    .status-btn.active-A { background: var(--absent);  border-color: var(--absent);  color: #fff; }
-    .status-btn.active-S { background: var(--sick);    border-color: var(--sick);    color: #fff; }
-    .status-btn.active-V { background: var(--vacation);border-color: var(--vacation);color: #000; }
-    .status-btn[data-s="L"]:hover:not(.active-L) { background: var(--late);    border-color: var(--late);    color: #000; }
-    .status-btn[data-s="A"]:hover:not(.active-A) { background: var(--absent);  border-color: var(--absent);  color: #fff; }
-    .status-btn[data-s="S"]:hover:not(.active-S) { background: var(--sick);    border-color: var(--sick);    color: #fff; }
-    .status-btn[data-s="V"]:hover:not(.active-V) { background: var(--vacation);border-color: var(--vacation);color: #000; }
+    .status-btn:hover { border-color: var(--sub); color: var(--text); }
+    .status-btn.active-L { background: var(--late);    border-color: var(--late);    color: #000; font-weight: 700; }
+    .status-btn.active-A { background: var(--absent);  border-color: var(--absent);  color: #fff; font-weight: 700; }
+    .status-btn.active-S { background: var(--sick);    border-color: var(--sick);    color: #fff; font-weight: 700; }
+    .status-btn.active-V { background: var(--vacation);border-color: var(--vacation);color: #000; font-weight: 700; }
+    .status-btn[data-s="L"]:hover:not([class*="active"]) { background:#2a2000; border-color:var(--late);    color:var(--late);    }
+    .status-btn[data-s="A"]:hover:not([class*="active"]) { background:#2a0000; border-color:var(--absent);  color:var(--absent);  }
+    .status-btn[data-s="S"]:hover:not([class*="active"]) { background:#1a0a2a; border-color:var(--sick);    color:var(--sick);    }
+    .status-btn[data-s="V"]:hover:not([class*="active"]) { background:#002a18; border-color:var(--vacation);color:var(--vacation);}
 
-    .summary-bar {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 10px 14px;
-      margin-bottom: 12px; display: flex; gap: 12px; flex-wrap: wrap;
-    }
-    .summary-stat { display: flex; align-items: center; gap: 5px; font-size: 11px; font-family: 'DM Mono', monospace; }
-    .summary-count { font-size: 17px; font-weight: 700; }
-    .summary-label { color: var(--muted); }
-
-    .actions { display: flex; gap: 8px; }
-
+    /* ── Actions ── */
+    .actions { display: flex; gap: 8px; margin-top: 4px; }
     .btn-submit {
-      flex: 1; padding: 11px; background: var(--accent); color: #fff;
+      flex: 1; padding: 12px; background: var(--accent); color: #fff;
       border: none; border-radius: var(--radius);
       font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 700;
       cursor: pointer; transition: opacity 0.2s, transform 0.1s;
     }
-    .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-submit:hover { opacity: 0.88; transform: translateY(-1px); }
     .btn-submit:active { transform: translateY(0); }
-    .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
+    .btn-submit:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
     .btn-secondary {
-      padding: 11px 14px; background: transparent; color: var(--muted);
+      padding: 12px 14px; background: transparent; color: var(--sub);
       border: 1px solid var(--border); border-radius: var(--radius);
       font-family: 'Sora', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s;
     }
-    .btn-secondary:hover { border-color: var(--muted); color: var(--text); }
+    .btn-secondary:hover { border-color: var(--sub); color: var(--text); }
 
     .status-msg {
       text-align: center; font-size: 12px; font-family: 'DM Mono', monospace;
       margin-top: 10px; min-height: 18px; color: var(--vacation);
     }
     .status-msg.error { color: var(--absent); }
+
+    .emp-count {
+      font-size: 10px; color: var(--sub); font-family: 'DM Mono', monospace;
+      margin-bottom: 8px; text-align: right;
+    }
   </style>
 </head>
 <body>
@@ -234,15 +256,23 @@ async function loadEmployees() {
     `Go to your hidden board → create a list called exactly "${CONFIG.EMPLOYEE_LIST_NAME}" → add one card per employee.`
   );
 
-  const cards = await api(`/lists/${empList.id}/cards`);
+  const cards = await api(`/lists/${empList.id}/cards?fields=name,cover`);
   if (!cards.length) throw new Error(
     `The "${CONFIG.EMPLOYEE_LIST_NAME}" list has no cards.\n` +
     `Add one card per employee (the card title = the employee name).`
   );
 
-  employees = cards.map(c => c.name.trim()).filter(Boolean).sort((a,b) => a.localeCompare(b));
+  employees = cards
+    .map(c => ({
+      name: c.name.trim(),
+      photo: c.cover && c.cover.scaled
+        ? c.cover.scaled.find(s => s.width >= 70)?.url || c.cover.scaled[0]?.url || null
+        : null,
+    }))
+    .filter(e => e.name)
+    .sort((a,b) => a.name.localeCompare(b.name));
   attendance = {};
-  employees.forEach(n => attendance[n] = null);
+  employees.forEach(e => attendance[e.name] = null);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -299,7 +329,7 @@ async function saveTokenFromPaste() {
 function render() {
   const TODAY = todayFormatted();
   const counts = { present:0, L:0, A:0, S:0, V:0 };
-  employees.forEach(n => { const s = attendance[n]; if(s) counts[s]++; else counts.present++; });
+  employees.forEach(e => { const s = attendance[e.name]; if(s) counts[s]++; else counts.present++; });
 
   document.getElementById('app').innerHTML = `
     <div class="header">
@@ -308,41 +338,43 @@ function render() {
       <button class="header-refresh" onclick="refreshList()" title="Reload employee list">↺ Refresh</button>
     </div>
 
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#4f8ef7"></div>Present</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Late</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Absent</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#a855f7"></div>Sick</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>Vacation</div>
+    <div class="summary-row">
+      <div class="summary-pill"><span class="count" style="color:#5b8dee">${counts.present}</span><span class="label">PRESENT</span></div>
+      <div class="summary-pill"><span class="count" style="color:#f0a500">${counts.L}</span><span class="label">LATE</span></div>
+      <div class="summary-pill"><span class="count" style="color:#e84545">${counts.A}</span><span class="label">ABSENT</span></div>
+      <div class="summary-pill"><span class="count" style="color:#9b59f5">${counts.S}</span><span class="label">SICK</span></div>
+      <div class="summary-pill"><span class="count" style="color:#11c987">${counts.V}</span><span class="label">VACATION</span></div>
     </div>
 
-    <div class="emp-count">${employees.length} employees · from "${CONFIG.EMPLOYEE_LIST_NAME}"</div>
+    <div class="emp-count">${employees.length} employees loaded</div>
 
     <div class="employee-list">
-      ${employees.map((name, i) => {
-        const s = attendance[name];
-        const initials = name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
-        const idx = i + 1;
+      ${employees.map((emp, i) => {
+        const s   = attendance[emp.name];
+        const initials = emp.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+        const firstName = emp.name.split(' ')[0];
+        const avatarContent = emp.photo
+          ? `<img src="${emp.photo}" alt="${firstName}" onerror="this.style.display='none';this.parentNode.textContent='${initials}'">`
+          : initials;
+        const badgeClass = s ? `emp-status-badge show badge-${s}` : 'emp-status-badge';
+        const badgeText  = s ? STATUS_MAP[s].full : '';
         return `
-        <div class="employee-row${s ? ' status-'+s : ''}" style="animation-delay:${idx*0.03}s">
-          <div class="employee-avatar">${initials}</div>
-          <div class="employee-name">${name}</div>
+        <div class="employee-row${s ? ' status-'+s : ''}" style="animation-delay:${(i+1)*0.03}s">
+          <div class="emp-top">
+            <div class="emp-avatar${s ? ' status-'+s : ''}">${avatarContent}</div>
+            <div class="emp-info">
+              <div class="emp-name">${emp.name}</div>
+              <span class="${badgeClass}">${badgeText}</span>
+            </div>
+          </div>
           <div class="status-buttons">
             ${Object.entries(STATUS_MAP).map(([k,v]) =>
               `<button class="status-btn${s===k ? ' active-'+k : ''}" data-s="${k}"
-                onclick="toggle(${JSON.stringify(name)},${JSON.stringify(k)})">${v.label}</button>`
+                onclick="toggle(${JSON.stringify(emp.name)},${JSON.stringify(k)})">${v.emoji} ${v.full}</button>`
             ).join('')}
           </div>
         </div>`;
       }).join('')}
-    </div>
-
-    <div class="summary-bar">
-      <div class="summary-stat"><span class="summary-count" style="color:#4f8ef7">${counts.present}</span><span class="summary-label">Present</span></div>
-      <div class="summary-stat"><span class="summary-count" style="color:#f59e0b">${counts.L}</span><span class="summary-label">Late</span></div>
-      <div class="summary-stat"><span class="summary-count" style="color:#ef4444">${counts.A}</span><span class="summary-label">Absent</span></div>
-      <div class="summary-stat"><span class="summary-count" style="color:#a855f7">${counts.S}</span><span class="summary-label">Sick</span></div>
-      <div class="summary-stat"><span class="summary-count" style="color:#10b981">${counts.V}</span><span class="summary-label">Vacation</span></div>
     </div>
 
     <div class="actions">
@@ -362,7 +394,7 @@ function toggle(name, status) {
   attendance[name] = attendance[name] === status ? null : status;
   render();
 }
-function resetAll() { employees.forEach(n => attendance[n] = null); render(); }
+function resetAll() { employees.forEach(e => attendance[e.name] = null); render(); }
 async function refreshList() {
   try { await loadEmployees(); render(); } catch(e) { setError(e.message); }
 }
@@ -377,7 +409,7 @@ async function submit() {
 
   try {
     const logListId = await getOrCreateLogList();
-    const flagged   = employees.filter(n => attendance[n]);
+    const flagged   = employees.filter(e => attendance[e.name]).map(e => e.name);
 
     for (const name of flagged) {
       btn.textContent = `Logging ${name}...`;
@@ -447,11 +479,11 @@ function parseDesc(desc) {
 // ═══════════════════════════════════════════════════════════
 async function sendSlack() {
   const TODAY = todayFormatted();
-  const present  = employees.filter(n => !attendance[n]);
-  const late     = employees.filter(n => attendance[n]==='L');
-  const absent   = employees.filter(n => attendance[n]==='A');
-  const sick     = employees.filter(n => attendance[n]==='S');
-  const vacation = employees.filter(n => attendance[n]==='V');
+  const present  = employees.filter(e => !attendance[e.name]).map(e => e.name);
+  const late     = employees.filter(e => attendance[e.name]==='L').map(e => e.name);
+  const absent   = employees.filter(e => attendance[e.name]==='A').map(e => e.name);
+  const sick     = employees.filter(e => attendance[e.name]==='S').map(e => e.name);
+  const vacation = employees.filter(e => attendance[e.name]==='V').map(e => e.name);
   const line = (e,l,arr) => arr.length ? `${e} *${l}* (${arr.length}): ${arr.join(', ')}` : null;
 
   const text = [
