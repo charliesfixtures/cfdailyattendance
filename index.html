@@ -24,12 +24,16 @@
       --radius:  12px;
     }
 
-    body {
+    html, body {
       font-family: 'Sora', sans-serif;
       background: var(--bg);
       color: var(--text);
-      padding: 14px;
+      margin: 0; padding: 0;
+      width: 100%;
+      overflow-x: hidden;
     }
+    body { padding: 14px; }
+    #app { width: 100%; }
 
     /* ── Header ── */
     .header {
@@ -144,14 +148,15 @@
 
     /* ── Status buttons row ── */
     .status-buttons {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;
+      display: grid; grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr; gap: 4px; width: 100%;
     }
     .status-btn {
-      padding: 7px 4px; border-radius: 7px;
+      padding: 8px 4px; border-radius: 7px;
       border: 1px solid var(--border); background: var(--surface);
       color: var(--sub); font-size: 11px; font-family: 'DM Mono', monospace;
       font-weight: 500; cursor: pointer; transition: all 0.15s;
-      text-align: center; white-space: nowrap;
+      text-align: center; white-space: nowrap; width: 100%;
     }
     .status-btn:hover { border-color: var(--sub); color: var(--text); }
     .status-btn.active-L { background: var(--late);    border-color: var(--late);    color: #000; font-weight: 700; }
@@ -384,7 +389,11 @@ function render() {
     <div class="status-msg" id="statusMsg"></div>
   `;
 
-  if (t) t.sizeTo('#app').catch(()=>{});
+  // Tell Trello to resize the popup to fit all content
+  if (t) {
+    const h = document.getElementById('app').scrollHeight + 30;
+    t.sizeTo('#app').catch(()=>{});
+  }
 }
 
 // ═══════════════════════════════════════════════════════════

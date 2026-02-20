@@ -19,7 +19,8 @@
           return t.popup({
             title: 'CF Daily Attendance',
             url: BASE_URL + 'index.html',
-            height: 500,
+            height: 800,
+            mouseEvent: event,
           });
         }
       }];
@@ -32,11 +33,12 @@
           light: BASE_URL + 'icon.svg',
         },
         text: 'Attendance',
-        callback: function(t) {
+        callback: function(t, event) {
           return t.popup({
             title: 'CF Daily Attendance',
             url: BASE_URL + 'index.html',
-            height: 500,
+            height: 800,
+            mouseEvent: event,
           });
         }
       }];
