@@ -527,8 +527,7 @@ async function logEmployee(emp, statusKey) {
 // to avoid any reliance on the global `selections` object
 // ════════════════════════════════════════════════════════
 async function postSummaryComment(finalSelections) {
-  // Build the summary text — formatted for Slack via Butler automation
-  const DATE    = today();
+  const DATE     = today();
   const present  = employees.filter(e => finalSelections[e.name] === 'P').map(e => e.name);
   const late     = employees.filter(e => finalSelections[e.name] === 'L').map(e => e.name);
   const absent   = employees.filter(e => finalSelections[e.name] === 'A').map(e => e.name);
@@ -536,32 +535,36 @@ async function postSummaryComment(finalSelections) {
   const vacation = employees.filter(e => finalSelections[e.name] === 'V').map(e => e.name);
   const flagged  = employees.length - present.length;
 
-  const section = (emoji, label, names) =>
-    names.length ? `${emoji} ${label} (${names.length}):\n${names.map(n => `• ${n}`).join('\n')}` : null;
+  // Names wrapped in backticks for Slack inline code highlight
+  const names = arr => arr.map(n => `\`${n}\``).join('  ');
+
+  // Each status on one line: emoji *Label* · `Name1`  `Name2`
+  const section = (emoji, label, arr) =>
+    arr.length ? `${emoji} *${label}* · ${names(arr)}` : null;
 
   const lines = [
-    `📋 Daily Attendance — ${DATE}`,
-    `${employees.length} employees · ${present.length} present · ${flagged} flagged`,
+    '.',
+    `📋 *Daily Attendance · ${DATE}*`,
+    `${employees.length} employees · ✅ ${present.length} present · ${flagged} flagged`,
     '',
   ];
 
   if (flagged === 0) {
-    lines.push('🎉 All employees present today!');
+    lines[2] = `🎉 All ${employees.length} employees present!`;
   } else {
     [
       section('🕐', 'Late',     late),
       section('❌', 'Absent',   absent),
       section('🤒', 'Sick',     sick),
       section('🌴', 'Vacation', vacation),
-    ].filter(Boolean).forEach(s => { lines.push(s); lines.push(''); });
+    ].filter(Boolean).forEach(s => lines.push(s));
   }
 
   // Get the current Attendance card ID from Trello context
   const cardInfo = await t.card('id');
   const cardId   = cardInfo.id;
 
-  // Post the summary as a comment on this Attendance card.
-  // Butler automation will detect this comment and forward it to Slack.
+  // Post as a comment — Butler picks this up and fires it to Slack
   await api(`/cards/${cardId}/actions/comments`, 'POST', {
     text: lines.join('\n'),
   });
