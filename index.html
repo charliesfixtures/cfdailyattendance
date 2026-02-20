@@ -1,322 +1,155 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CF Daily Attendance</title>
-  <script src="https://p.trellocdn.com/power-up.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CF Daily Attendance</title>
+<script src="https://p.trellocdn.com/power-up.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: transparent;
+  --row-bg: #1e2130;
+  --row-hover:#252839;
+  --border: #2d3148;
+  --text: #dde1f0;
+  --sub: #7880a0;
+  --present: #7880a0;
+  --late: #e6a817;
+  --absent: #e54545;
+  --sick: #9b59f5;
+  --vacation: #11c987;
+  --radius: 8px;
+}
+html { overflow: hidden; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 0; margin: 0; overflow: visible; }
 
-    :root {
-      --bg:       transparent;
-      --row-bg:   #1e2130;
-      --row-hover:#252839;
-      --border:   #2d3148;
-      --text:     #dde1f0;
-      --sub:      #7880a0;
-      --present:  #7880a0;
-      --late:     #e6a817;
-      --absent:   #e54545;
-      --sick:     #9b59f5;
-      --vacation: #11c987;
-      --radius:   8px;
-    }
+/* ── Auth screen ── */
+.auth-screen { padding: 16px; background: #1e2130; border-radius: var(--radius); margin: 8px; }
+.auth-screen p { font-size: 12px; color: var(--sub); line-height: 1.7; margin-bottom: 12px; }
+.auth-screen a { color: #5b8dee; }
+.auth-textarea { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: #0d0f14; color: var(--text); font-family: monospace; font-size: 11px; resize: none; height: 60px; margin-bottom: 8px; }
+.auth-textarea:focus { outline: none; border-color: #5b8dee; }
 
-    html {
-      overflow: hidden; /* Let Trello handle scrolling, not us */
-    }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      padding: 0;
-      margin: 0;
-      overflow: visible;
-    }
+/* ── Loading / error ── */
+.state { padding: 20px 16px; text-align: center; font-size: 12px; color: var(--sub); font-family: monospace; }
+.state.error { color: var(--absent); }
+.spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: #5b8dee; border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 10px; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Auth screen ── */
-    .auth-screen {
-      padding: 16px;
-      background: #1e2130;
-      border-radius: var(--radius);
-      margin: 8px;
-    }
-    .auth-screen p {
-      font-size: 12px; color: var(--sub);
-      line-height: 1.7; margin-bottom: 12px;
-    }
-    .auth-screen a { color: #5b8dee; }
-    .auth-textarea {
-      width: 100%; padding: 8px; border-radius: 6px;
-      border: 1px solid var(--border); background: #0d0f14;
-      color: var(--text); font-family: monospace; font-size: 11px;
-      resize: none; height: 60px; margin-bottom: 8px;
-    }
-    .auth-textarea:focus { outline: none; border-color: #5b8dee; }
+/* ── Header ── */
+.hdr { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px 8px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+.hdr-left { display: flex; align-items: center; gap: 8px; }
+.hdr-title { font-size: 12px; font-weight: 600; color: var(--sub); letter-spacing: 0.6px; text-transform: uppercase; }
+.hdr-date { font-size: 11px; color: var(--sub); opacity: 0.6; }
+.hdr-right { display: flex; gap: 6px; align-items: center; }
+.btn-sm { padding: 4px 10px; border-radius: 5px; font-size: 11px; font-family: 'Inter', sans-serif; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--sub); transition: all 0.15s; }
+.btn-sm:hover { border-color: var(--sub); color: var(--text); }
+.btn-sm.primary { background: #5b8dee; border-color: #5b8dee; color: #fff; }
+.btn-sm.primary:hover { opacity: 0.88; }
+.btn-sm:disabled { opacity: 0.35; cursor: not-allowed; }
 
-    /* ── Loading / error ── */
-    .state {
-      padding: 20px 16px; text-align: center;
-      font-size: 12px; color: var(--sub); font-family: monospace;
-    }
-    .state.error { color: var(--absent); }
-    .spinner {
-      width: 20px; height: 20px; border: 2px solid var(--border);
-      border-top-color: #5b8dee; border-radius: 50%;
-      animation: spin .7s linear infinite; margin: 0 auto 10px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+/* ── Employee list ── */
+.emp-list { padding: 0 8px; }
 
-    /* ── Header ── */
-    .hdr {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 12px 8px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 4px;
-    }
-    .hdr-left { display: flex; align-items: center; gap: 8px; }
-    .hdr-title { font-size: 12px; font-weight: 600; color: var(--sub); letter-spacing: 0.6px; text-transform: uppercase; }
-    .hdr-date  { font-size: 11px; color: var(--sub); opacity: 0.6; }
-    .hdr-right { display: flex; gap: 6px; align-items: center; }
-    .btn-sm {
-      padding: 4px 10px; border-radius: 5px; font-size: 11px;
-      font-family: 'Inter', sans-serif; font-weight: 500;
-      cursor: pointer; border: 1px solid var(--border);
-      background: transparent; color: var(--sub); transition: all 0.15s;
-    }
-    .btn-sm:hover { border-color: var(--sub); color: var(--text); }
-    .btn-sm.primary {
-      background: #5b8dee; border-color: #5b8dee; color: #fff;
-    }
-    .btn-sm.primary:hover { opacity: 0.88; }
-    .btn-sm:disabled { opacity: 0.35; cursor: not-allowed; }
+/* ── Single employee row ── */
+.emp-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: var(--radius); margin-bottom: 3px; transition: background 0.15s; position: relative; }
+.emp-row:hover { background: var(--row-hover); }
+.emp-row::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px; border-radius: 2px; background: transparent; transition: background 0.2s; }
+.emp-row.s-L::before { background: var(--late); }
+.emp-row.s-A::before { background: var(--absent); }
+.emp-row.s-S::before { background: var(--sick); }
+.emp-row.s-V::before { background: var(--vacation); }
 
-    /* ── Employee list ── */
-    .emp-list { padding: 0 8px; }
+/* Avatar */
+.emp-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--sub); overflow: hidden; border: 1.5px solid var(--border); transition: border-color 0.2s; }
+.emp-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.emp-row.s-L .emp-avatar { border-color: var(--late); }
+.emp-row.s-A .emp-avatar { border-color: var(--absent); }
+.emp-row.s-S .emp-avatar { border-color: var(--sick); }
+.emp-row.s-V .emp-avatar { border-color: var(--vacation); }
 
-    /* ── Single employee row ── */
-    .emp-row {
-      display: flex; align-items: center; gap: 10px;
-      padding: 7px 8px; border-radius: var(--radius);
-      margin-bottom: 3px; transition: background 0.15s;
-      position: relative;
-    }
-    .emp-row:hover { background: var(--row-hover); }
+/* Name */
+.emp-name { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
-    /* Left accent bar — shows status color */
-    .emp-row::before {
-      content: ''; position: absolute; left: 0; top: 6px; bottom: 6px;
-      width: 3px; border-radius: 2px; background: transparent;
-      transition: background 0.2s;
-    }
-    .emp-row.s-L::before { background: var(--late); }
-    .emp-row.s-A::before { background: var(--absent); }
-    .emp-row.s-S::before { background: var(--sick); }
-    .emp-row.s-V::before { background: var(--vacation); }
+/* LASV counters */
+.emp-counters { display: flex; gap: 6px; align-items: center; flex-shrink: 0; font-size: 11px; color: var(--sub); white-space: nowrap; }
+.ctr { display: flex; align-items: center; gap: 2px; }
+.ctr-val { font-weight: 600; }
+.ctr-L .ctr-val { color: var(--late); }
+.ctr-A .ctr-val { color: var(--absent); }
+.ctr-S .ctr-val { color: var(--sick); }
+.ctr-V .ctr-val { color: var(--vacation); }
 
-    /* Avatar */
-    .emp-avatar {
-      width: 28px; height: 28px; border-radius: 50%;
-      background: var(--border); flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 10px; font-weight: 600; color: var(--sub);
-      overflow: hidden; border: 1.5px solid var(--border);
-      transition: border-color 0.2s;
-    }
-    .emp-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .emp-row.s-L .emp-avatar { border-color: var(--late); }
-    .emp-row.s-A .emp-avatar { border-color: var(--absent); }
-    .emp-row.s-S .emp-avatar { border-color: var(--sick); }
-    .emp-row.s-V .emp-avatar { border-color: var(--vacation); }
+/* Dropdown */
+.emp-dropdown { flex-shrink: 0; position: relative; }
+.status-select { appearance: none; -webkit-appearance: none; padding: 4px 22px 4px 9px; border-radius: 20px; border: 1px solid var(--border); background: #0d0f14 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237880a0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 7px center; color: var(--present); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.15s; min-width: 82px; }
+.status-select:focus { outline: none; border-color: #5b8dee; }
+.status-select.v-P { color: var(--present); border-color: var(--border); }
+.status-select.v-L { color: var(--late); border-color: var(--late); background-color: #1e1a08; }
+.status-select.v-A { color: var(--absent); border-color: var(--absent); background-color: #1e0808; }
+.status-select.v-S { color: var(--sick); border-color: var(--sick); background-color: #13081e; }
+.status-select.v-V { color: var(--vacation); border-color: var(--vacation); background-color: #081e12; }
 
-    /* Name */
-    .emp-name {
-      font-size: 13px; font-weight: 500; color: var(--text);
-      flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      min-width: 0;
-    }
+/* ── Footer ── */
+.footer { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px 12px; margin-top: 6px; border-top: 1px solid var(--border); }
+.footer-counts { display: flex; gap: 10px; font-size: 11px; }
+.fc { display: flex; align-items: center; gap: 3px; font-weight: 500; }
+.fc-dot { width: 6px; height: 6px; border-radius: 50%; }
 
-    /* LASV counters — only non-zero shown */
-    .emp-counters {
-      display: flex; gap: 6px; align-items: center;
-      flex-shrink: 0; font-size: 11px; color: var(--sub);
-      white-space: nowrap;
-    }
-    .ctr { display: flex; align-items: center; gap: 2px; }
-    .ctr-val { font-weight: 600; }
-    .ctr-L .ctr-val { color: var(--late); }
-    .ctr-A .ctr-val { color: var(--absent); }
-    .ctr-S .ctr-val { color: var(--sick); }
-    .ctr-V .ctr-val { color: var(--vacation); }
+/* ── Submit progress ── */
+.submit-progress { padding: 20px 16px; text-align: center; }
+.progress-bar-wrap { height: 4px; background: var(--border); border-radius: 2px; margin: 10px 0 8px; overflow: hidden; }
+.progress-bar { height: 100%; background: #5b8dee; border-radius: 2px; transition: width 0.4s ease; width: 0%; }
+.progress-label { font-size: 11px; color: var(--sub); font-family: monospace; min-height: 16px; }
 
-    /* Dropdown */
-    .emp-dropdown {
-      flex-shrink: 0;
-      position: relative;
-    }
-    .status-select {
-      appearance: none; -webkit-appearance: none;
-      padding: 4px 22px 4px 9px;
-      border-radius: 20px; border: 1px solid var(--border);
-      background: #0d0f14 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237880a0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 7px center;
-      color: var(--present);
-      font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500;
-      cursor: pointer; transition: all 0.15s; min-width: 82px;
-    }
-    .status-select:focus { outline: none; border-color: #5b8dee; }
+/* ── Summary card ── */
+.summary-card { margin: 8px 12px 12px; background: #1a1f35; border: 1px solid #2d3148; border-radius: var(--radius); overflow: hidden; }
+.summary-header { background: #1e2540; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
+.summary-header-title { font-size: 12px; font-weight: 600; color: var(--text); }
+.summary-header-sub { font-size: 10px; color: var(--sub); }
+.summary-section { padding: 8px 14px; border-top: 1px solid #2d3148; }
+.summary-section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+.summary-names { font-size: 12px; color: var(--text); line-height: 1.8; }
+.summary-name-pill { display: inline-block; margin: 1px 3px 1px 0; padding: 1px 8px; border-radius: 20px; font-size: 11px; }
+.summary-footer { padding: 8px 14px; border-top: 1px solid #2d3148; display: flex; justify-content: space-between; align-items: center; }
+.summary-footer-stat { font-size: 11px; color: var(--sub); }
 
-    /* Color the select based on value */
-    .status-select.v-P { color: var(--present); border-color: var(--border); }
-    .status-select.v-L { color: var(--late);    border-color: var(--late);    background-color: #1e1a08; }
-    .status-select.v-A { color: var(--absent);  border-color: var(--absent);  background-color: #1e0808; }
-    .status-select.v-S { color: var(--sick);    border-color: var(--sick);    background-color: #13081e; }
-    .status-select.v-V { color: var(--vacation);border-color: var(--vacation);background-color: #081e12; }
+/* ── Edit mode ── */
+.edit-section { margin: 0 12px 12px; background: #1a1f35; border: 1px solid #2d3148; border-radius: var(--radius); overflow: hidden; }
+.edit-header { background: #1e2540; padding: 8px 14px; font-size: 11px; font-weight: 600; color: var(--sub); letter-spacing: 0.5px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+.edit-row { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-top: 1px solid #2d3148; flex-wrap: wrap; }
+.edit-name { font-size: 12px; font-weight: 500; flex: 1; min-width: 100px; }
+.edit-counters { display: flex; gap: 6px; flex-wrap: wrap; }
+.edit-field { display: flex; align-items: center; gap: 4px; }
+.edit-field label { font-size: 10px; color: var(--sub); }
+.edit-input { width: 40px; padding: 3px 6px; border-radius: 5px; border: 1px solid var(--border); background: #0d0f14; color: var(--text); font-size: 12px; text-align: center; font-family: 'Inter', sans-serif; }
+.edit-input:focus { outline: none; border-color: #5b8dee; }
+.btn-save-edit { font-size: 11px; padding: 3px 10px; border-radius: 5px; border: 1px solid #5b8dee; background: transparent; color: #5b8dee; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; white-space: nowrap; }
+.btn-save-edit:hover { background: #5b8dee; color: #fff; }
+.btn-save-edit:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* ── Footer ── */
-    .footer {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 12px 12px; margin-top: 6px;
-      border-top: 1px solid var(--border);
-    }
-    .footer-counts {
-      display: flex; gap: 10px; font-size: 11px;
-    }
-    .fc { display: flex; align-items: center; gap: 3px; font-weight: 500; }
-    .fc-dot { width: 6px; height: 6px; border-radius: 50%; }
+/* ── Status message ── */
+.status-msg { text-align: center; font-size: 11px; font-family: monospace; padding: 4px 12px 10px; min-height: 20px; color: var(--vacation); }
+.status-msg.error { color: var(--absent); }
 
-    .footer-actions { display: flex; gap: 6px; }
-
-    /* ── Submit progress ── */
-    .submit-progress {
-      padding: 20px 16px; text-align: center;
-    }
-    .progress-bar-wrap {
-      height: 4px; background: var(--border); border-radius: 2px;
-      margin: 10px 0 8px; overflow: hidden;
-    }
-    .progress-bar {
-      height: 100%; background: #5b8dee; border-radius: 2px;
-      transition: width 0.4s ease; width: 0%;
-    }
-    .progress-label {
-      font-size: 11px; color: var(--sub); font-family: monospace;
-      min-height: 16px;
-    }
-
-    /* ── Summary card shown after submit ── */
-    .summary-card {
-      margin: 8px 12px 12px;
-      background: #1a1f35; border: 1px solid #2d3148;
-      border-radius: var(--radius); overflow: hidden;
-    }
-    .summary-header {
-      background: #1e2540; padding: 10px 14px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .summary-header-title {
-      font-size: 12px; font-weight: 600; color: var(--text);
-    }
-    .summary-header-sub {
-      font-size: 10px; color: var(--sub);
-    }
-    .summary-section {
-      padding: 8px 14px; border-top: 1px solid #2d3148;
-    }
-    .summary-section-label {
-      font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
-      text-transform: uppercase; margin-bottom: 5px;
-      display: flex; align-items: center; gap: 5px;
-    }
-    .summary-names {
-      font-size: 12px; color: var(--text); line-height: 1.8;
-    }
-    .summary-name-pill {
-      display: inline-block; margin: 1px 3px 1px 0;
-      padding: 1px 8px; border-radius: 20px; font-size: 11px;
-    }
-    .summary-footer {
-      padding: 8px 14px; border-top: 1px solid #2d3148;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .summary-footer-stat {
-      font-size: 11px; color: var(--sub);
-    }
-    .btn-reopen {
-      font-size: 11px; color: var(--sub); background: transparent;
-      border: 1px solid var(--border); border-radius: 5px;
-      padding: 3px 10px; cursor: pointer; font-family: 'Inter', sans-serif;
-      transition: all 0.15s;
-    }
-    .btn-reopen:hover { border-color: var(--sub); color: var(--text); }
-
-    /* ── Edit mode ── */
-    .edit-section {
-      margin: 0 12px 12px;
-      background: #1a1f35; border: 1px solid #2d3148;
-      border-radius: var(--radius); overflow: hidden;
-    }
-    .edit-header {
-      background: #1e2540; padding: 8px 14px;
-      font-size: 11px; font-weight: 600; color: var(--sub);
-      letter-spacing: 0.5px; text-transform: uppercase;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .edit-row {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 14px; border-top: 1px solid #2d3148;
-      flex-wrap: wrap;
-    }
-    .edit-name { font-size: 12px; font-weight: 500; flex: 1; min-width: 100px; }
-    .edit-counters { display: flex; gap: 6px; flex-wrap: wrap; }
-    .edit-field {
-      display: flex; align-items: center; gap: 4px;
-    }
-    .edit-field label { font-size: 10px; color: var(--sub); }
-    .edit-input {
-      width: 40px; padding: 3px 6px; border-radius: 5px;
-      border: 1px solid var(--border); background: #0d0f14;
-      color: var(--text); font-size: 12px; text-align: center;
-      font-family: 'Inter', sans-serif;
-    }
-    .edit-input:focus { outline: none; border-color: #5b8dee; }
-    .btn-save-edit {
-      font-size: 11px; padding: 3px 10px; border-radius: 5px;
-      border: 1px solid #5b8dee; background: transparent;
-      color: #5b8dee; cursor: pointer; font-family: 'Inter', sans-serif;
-      transition: all 0.15s; white-space: nowrap;
-    }
-    .btn-save-edit:hover { background: #5b8dee; color: #fff; }
-    .btn-save-edit:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    /* ── Status message ── */
-    .status-msg {
-      text-align: center; font-size: 11px; font-family: monospace;
-      padding: 4px 12px 10px; min-height: 20px; color: var(--vacation);
-    }
-    .status-msg.error { color: var(--absent); }
-
-    /* ── Divider between employees ── */
-    .emp-divider {
-      height: 1px; background: var(--border); opacity: 0.4;
-      margin: 0 8px 3px;
-    }
-  </style>
+/* ── Divider ── */
+.emp-divider { height: 1px; background: var(--border); opacity: 0.4; margin: 0 8px 3px; }
+</style>
 </head>
 <body>
 <div id="app"><div class="state"><div class="spinner"></div>Loading...</div></div>
 
 <script>
 // ════════════════════════════════════════════════════════
-//  CONFIG
+// CONFIG
 // ════════════════════════════════════════════════════════
 const CFG = {
-  API_KEY:        '53abc1f4686798eadbeb8f91ea79c9bb',
-  LOG_BOARD_ID:   '6965633f4fe5254c47e38527',
-  SLACK_WEBHOOK:  'SLACK_WEBHOOK_PLACEHOLDER',
-  EMP_LIST_NAME:  '2026 Employee',
-  LOG_LIST_NAME:  '', // set to current year automatically
+  API_KEY:      '53abc1f4686798eadbeb8f91ea79c9bb',
+  LOG_BOARD_ID: '6965633f4fe5254c47e38527',
+  SLACK_WEBHOOK: 'SLACK_WEBHOOK_PLACEHOLDER',
+  EMP_LIST_NAME: '2026 Employee',
 };
 
 const STATUS = {
@@ -328,26 +161,28 @@ const STATUS = {
 };
 
 // ════════════════════════════════════════════════════════
-//  State
+// State
 // ════════════════════════════════════════════════════════
-let t            = null;
-let token        = null;
-let employees    = [];    // [{ name, photo, counters:{L,A,S,V}, cardId }]
-let selections   = {};    // { name: 'P'|'L'|'A'|'S'|'V' }  default P
-let submitted    = false;
+let t          = null;
+let token      = null;
+let employees  = []; // [{ name, photo, counters:{L,A,S,V}, cardId }]
+let selections = {}; // { empName: 'P'|'L'|'A'|'S'|'V' }
+let submitted  = false;
 
 function today() {
   return new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
 }
-function year() { return new Date().getFullYear().toString(); }
+function year() {
+  return new Date().getFullYear().toString();
+}
 
 // ════════════════════════════════════════════════════════
-//  Trello API
+// Trello API
 // ════════════════════════════════════════════════════════
 async function api(path, method='GET', body=null) {
   const sep = path.includes('?') ? '&' : '?';
-  const url = `https://api.trello.com/1${path}${sep}key=${CFG.API_KEY}&token=${token}`;
-  const opts = { method, headers:{'Content-Type':'application/json'} };
+  const url  = `https://api.trello.com/1${path}${sep}key=${CFG.API_KEY}&token=${token}`;
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(url, opts);
   if (!res.ok) throw new Error(`Trello ${res.status}: ${await res.text()}`);
@@ -355,66 +190,89 @@ async function api(path, method='GET', body=null) {
 }
 
 // ════════════════════════════════════════════════════════
-//  Load employees from "2026 Employee" list
-//  Also pre-loads their LASV counters from the log list
+// Load employees from hidden board
 // ════════════════════════════════════════════════════════
 async function loadEmployees() {
   setState('loading', 'Fetching employee list...');
 
-  // Get all lists on hidden board
-  const lists = await api(`/boards/${CFG.LOG_BOARD_ID}/lists`);
-
-  // Find employee roster list
+  const lists   = await api(`/boards/${CFG.LOG_BOARD_ID}/lists`);
   const empList = lists.find(l =>
     l.name.trim().toLowerCase() === CFG.EMP_LIST_NAME.toLowerCase()
   );
-  if (!empList) throw new Error(
-    `List "${CFG.EMP_LIST_NAME}" not found on your hidden board.`
-  );
+  if (!empList) throw new Error(`List "${CFG.EMP_LIST_NAME}" not found on hidden board.`);
 
-  // Fetch employee cards — cover for photo, desc for LASV counters, id for logging
+  // fields=name,cover,desc — cover gives us the photo
   const cards = await api(`/lists/${empList.id}/cards?fields=name,cover,desc`);
-  if (!cards.length) throw new Error(
-    `No employee cards found in "${CFG.EMP_LIST_NAME}".`
-  );
+  if (!cards.length) throw new Error(`No cards found in "${CFG.EMP_LIST_NAME}".`);
 
   employees = cards
     .map(c => {
-      const name = c.name.trim();
+      const name  = c.name.trim();
       const photo = c.cover?.scaled
         ? (c.cover.scaled.find(s => s.width >= 70)?.url || c.cover.scaled[0]?.url || null)
         : null;
-      // Read LASV counters directly from the employee card description
       const counters = parseDesc(c.desc);
       return { name, photo, counters, cardId: c.id };
     })
     .filter(e => e.name)
-    .sort((a,b) => a.name.localeCompare(b.name));
+    .sort((a, b) => a.name.localeCompare(b.name));
 
-  // Default everyone to Present
+  // Reset selections to Present for everyone
   selections = {};
   employees.forEach(e => selections[e.name] = 'P');
 }
 
 // ════════════════════════════════════════════════════════
-//  Render
+// LASV description helpers
+// ════════════════════════════════════════════════════════
+function parseDesc(desc) {
+  const d = { L: 0, A: 0, S: 0, V: 0 };
+  if (!desc) return d;
+  // Match the data row of the markdown table — handles spaces flexibly
+  const m = desc.match(/\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|/);
+  if (m) { d.L = +m[1]; d.A = +m[2]; d.S = +m[3]; d.V = +m[4]; }
+  return d;
+}
+
+function buildDesc(c) {
+  return `## LASV Summary\n\n| Late | Absent | Sick | Vacation |\n|------|--------|------|----------|\n| ${c.L||0} | ${c.A||0} | ${c.S||0} | ${c.V||0} |`;
+}
+
+// ════════════════════════════════════════════════════════
+// Read all current selections directly from DOM
+// This is the single source of truth — avoids any stale
+// state in the `selections` object caused by iframe resets
+// ════════════════════════════════════════════════════════
+function readSelectionsFromDOM() {
+  const result = {};
+  employees.forEach(emp => {
+    const safeId = sanitizeName(emp.name);
+    const el     = document.querySelector(`select[data-emp="${safeId}"]`);
+    result[emp.name] = el ? el.value : (selections[emp.name] || 'P');
+  });
+  return result;
+}
+
+function sanitizeName(name) {
+  return name.replace(/[^a-zA-Z0-9]/g, '_');
+}
+
+// ════════════════════════════════════════════════════════
+// Render
 // ════════════════════════════════════════════════════════
 function render() {
-  const DATE = today();
-
-  // Count summary
-  const counts = {P:0,L:0,A:0,S:0,V:0};
+  const DATE   = today();
+  const counts = { P:0, L:0, A:0, S:0, V:0 };
   employees.forEach(e => counts[selections[e.name]]++);
 
   const rows = employees.map((emp, i) => {
     const sel      = selections[emp.name];
-    const initials = emp.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const initials = emp.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     const avatarInner = emp.photo
-      ? `<img src="${emp.photo}" alt="" onerror="this.style.display='none';this.insertAdjacentText('afterend','${initials}')">`
+      ? `<img src="${emp.photo}" alt="" onerror="this.style.display='none'">${initials}`
       : initials;
 
-    // Build counters — only show non-zero
-    const { L,A,S,V } = emp.counters;
+    const { L, A, S, V } = emp.counters;
     const ctrParts = [
       L ? `<span class="ctr ctr-L"><span class="ctr-val">${L}</span>🕐</span>` : '',
       A ? `<span class="ctr ctr-A"><span class="ctr-val">${A}</span>❌</span>` : '',
@@ -422,16 +280,18 @@ function render() {
       V ? `<span class="ctr ctr-V"><span class="ctr-val">${V}</span>🌴</span>` : '',
     ].filter(Boolean).join('');
 
-    const divider = i < employees.length-1 ? '<div class="emp-divider"></div>' : '';
+    const safeId  = sanitizeName(emp.name);
+    const divider = i < employees.length - 1 ? '<div class="emp-divider"></div>' : '';
 
     return `
-      <div class="emp-row${sel !== 'P' ? ' s-'+sel : ''}" id="row-${i}">
+      <div class="emp-row${sel !== 'P' ? ' s-' + sel : ''}" id="row-${i}">
         <div class="emp-avatar">${avatarInner}</div>
         <div class="emp-name">${emp.name}</div>
         ${ctrParts ? `<div class="emp-counters">${ctrParts}</div>` : ''}
         <div class="emp-dropdown">
-          <select class="status-select v-${sel}"
-            data-emp="${emp.name.replace(/[^a-zA-Z0-9]/g, '_')}"
+          <select
+            class="status-select v-${sel}"
+            data-emp="${safeId}"
             onchange="setStatus(${JSON.stringify(emp.name)}, this.value, this)"
             ${submitted ? 'disabled' : ''}>
             <option value="P"${sel==='P'?' selected':''}>Present</option>
@@ -460,11 +320,9 @@ function render() {
         }
       </div>
     </div>
-
     <div class="emp-list">${rows}</div>
-
     <div class="footer">
-      <div class="footer-counts">
+      <div class="footer-counts" id="footerCounts">
         <span class="fc"><span class="fc-dot" style="background:#5b8dee"></span>${counts.P}</span>
         ${counts.L ? `<span class="fc" style="color:var(--late)">🕐 ${counts.L}</span>` : ''}
         ${counts.A ? `<span class="fc" style="color:var(--absent)">❌ ${counts.A}</span>` : ''}
@@ -473,49 +331,52 @@ function render() {
       </div>
       <span style="font-size:10px;color:var(--sub)">${employees.length} employees</span>
     </div>
-    <div class="status-msg" id="statusMsg"></div>
-  `;
+    <div class="status-msg" id="statusMsg"></div>`;
 
-  // Expand iframe to full content height — eliminates inner scrollbar
-  if (t) {
-    requestAnimationFrame(() => {
-      t.sizeTo('#app').catch(()=>{});
-    });
-  }
+  // Size iframe ONCE after render — not on every dropdown change
+  if (t) requestAnimationFrame(() => t.sizeTo('#app').catch(() => {}));
 }
 
 // ════════════════════════════════════════════════════════
-//  Interactions
+// Interactions
 // ════════════════════════════════════════════════════════
 function setStatus(name, val, selectEl) {
+  // Update in-memory selections
   selections[name] = val;
+
   // Update select color class
   selectEl.className = `status-select v-${val}`;
-  // Update row accent
+
+  // Update row accent bar
   const rows = document.querySelectorAll('.emp-row');
   rows.forEach(row => {
     const nameEl = row.querySelector('.emp-name');
     if (nameEl && nameEl.textContent === name) {
-      row.className = `emp-row${val !== 'P' ? ' s-'+val : ''}`;
+      row.className = `emp-row${val !== 'P' ? ' s-' + val : ''}`;
     }
   });
+
   // Update footer counts
   updateFooterCounts();
-  // sizeTo intentionally omitted here — resizing on dropdown change resets the iframe
+
+  // NOTE: No t.sizeTo() here — calling sizeTo on dropdown change resets the iframe
+  // and wipes selections. Sizing is only done once after initial render.
 }
 
 function updateFooterCounts() {
-  const counts = {P:0,L:0,A:0,S:0,V:0};
-  employees.forEach(e => counts[selections[e.name]]++);
-  const fc = document.querySelector('.footer-counts');
+  // Read live from DOM to get accurate counts
+  const current = readSelectionsFromDOM();
+  const counts  = { P:0, L:0, A:0, S:0, V:0 };
+  employees.forEach(e => counts[current[e.name]]++);
+
+  const fc = document.getElementById('footerCounts');
   if (!fc) return;
   fc.innerHTML = `
     <span class="fc"><span class="fc-dot" style="background:#5b8dee"></span>${counts.P}</span>
     ${counts.L ? `<span class="fc" style="color:var(--late)">🕐 ${counts.L}</span>` : ''}
     ${counts.A ? `<span class="fc" style="color:var(--absent)">❌ ${counts.A}</span>` : ''}
     ${counts.S ? `<span class="fc" style="color:var(--sick)">🤒 ${counts.S}</span>` : ''}
-    ${counts.V ? `<span class="fc" style="color:var(--vacation)">🌴 ${counts.V}</span>` : ''}
-  `;
+    ${counts.V ? `<span class="fc" style="color:var(--vacation)">🌴 ${counts.V}</span>` : ''}`;
 }
 
 function resetAll() {
@@ -525,42 +386,38 @@ function resetAll() {
 
 async function refreshAll() {
   try {
-    await loadEmployees();
     submitted = false;
+    await loadEmployees();
     render();
-  } catch(e) { setState('error', e.message); }
+  } catch(e) {
+    setState('error', e.message);
+  }
 }
 
 // ════════════════════════════════════════════════════════
-//  Submit
+// Submit
 // ════════════════════════════════════════════════════════
-let lastSubmitSelections = {}; // store for summary display
-
 async function submitAttendance() {
   const btn = document.getElementById('submitBtn');
   if (btn) btn.disabled = true;
 
-  // Read current selections DIRECTLY from the DOM dropdowns
-  // This is more reliable than the selections object which can be reset by sizeTo
-  const currentSelections = {};
-  employees.forEach(emp => {
-    const safeId  = emp.name.replace(/[^a-zA-Z0-9]/g, '_');
-    const sel     = document.querySelector(`select[data-emp="${safeId}"]`);
-    currentSelections[emp.name] = sel ? sel.value : 'P';
-  });
+  // ── CRITICAL: Read values from DOM, not the `selections` object ──
+  // The `selections` object can be stale if the iframe was ever resized/reset.
+  // The DOM dropdowns always reflect what the manager actually selected.
+  const finalSelections = readSelectionsFromDOM();
 
-  // Override selections with DOM values before proceeding
-  Object.assign(selections, currentSelections);
+  // Sync back to `selections` so Slack and summary screen use correct values
+  Object.assign(selections, finalSelections);
 
-  const flagged = employees.filter(e => currentSelections[e.name] !== 'P');
-  const total   = flagged.length + 1;
+  const flagged = employees.filter(e => finalSelections[e.name] !== 'P');
+  const total   = flagged.length + 1; // +1 for Slack step
   let   step    = 0;
 
   function setProgress(label) {
     step++;
-    const pct = Math.round((step / total) * 100);
-    const bar = document.getElementById('progressBar');
-    const lbl = document.getElementById('progressLabel');
+    const pct = Math.min(Math.round((step / total) * 100), 99);
+    const bar  = document.getElementById('progressBar');
+    const lbl  = document.getElementById('progressLabel');
     if (bar) bar.style.width = pct + '%';
     if (lbl) lbl.textContent = label;
   }
@@ -577,30 +434,36 @@ async function submitAttendance() {
         Submitting attendance...
       </div>
       <div style="font-size:11px;color:var(--sub);margin-bottom:10px">
-        ${flagged.length > 0 ? `Logging ${flagged.length} employee${flagged.length>1?'s':''} + Slack` : 'Sending Slack summary...'}
+        ${flagged.length > 0
+          ? `Logging ${flagged.length} employee${flagged.length > 1 ? 's' : ''} + Slack`
+          : 'Sending Slack summary...'}
       </div>
       <div class="progress-bar-wrap">
         <div class="progress-bar" id="progressBar" style="width:5%"></div>
       </div>
       <div class="progress-label" id="progressLabel">Starting...</div>
     </div>`;
-  if (t) t.sizeTo('#app').catch(()=>{});
+
+  if (t) t.sizeTo('#app').catch(() => {});
 
   try {
     for (const emp of flagged) {
       setProgress(`Logging ${emp.name}...`);
-      await logEmployee(emp, currentSelections[emp.name]);
+      await logEmployee(emp, finalSelections[emp.name]);
     }
 
     setProgress('Notifying Slack...');
-    await sendSlack();
+    await sendSlack(finalSelections);
 
-    lastSubmitSelections = { ...currentSelections };
+    // Complete progress bar
+    const bar = document.getElementById('progressBar');
+    if (bar) bar.style.width = '100%';
+
     submitted = true;
-    showSummary();
+    setTimeout(() => showSummary(finalSelections), 400);
 
   } catch(e) {
-    console.error(e);
+    console.error('Submit error:', e);
     document.getElementById('app').innerHTML = `
       <div class="hdr">
         <div class="hdr-left"><span class="hdr-title">Attendance</span></div>
@@ -608,24 +471,105 @@ async function submitAttendance() {
           <button class="btn-sm" onclick="submitted=false;render()">↺ Back</button>
         </div>
       </div>
-      <div class="state error">⚠️ ${e.message}<br/><br/>
+      <div class="state error">
+        ⚠️ ${e.message}<br/><br/>
         <button class="btn-sm" onclick="submitted=false;render()">↺ Try Again</button>
       </div>`;
-    if (t) t.sizeTo('#app').catch(()=>{});
+    if (t) t.sizeTo('#app').catch(() => {});
   }
 }
 
 // ════════════════════════════════════════════════════════
-//  Summary screen (shown after submit)
+// Log to hidden board — updates counter + adds comment
 // ════════════════════════════════════════════════════════
-function showSummary() {
+async function logEmployee(emp, statusKey) {
+  const DATE   = today();
+  const status = STATUS[statusKey];
+
+  if (!emp.cardId) throw new Error(`No card ID for ${emp.name} — try refreshing.`);
+
+  // Fetch the current description fresh from Trello
+  const card = await api(`/cards/${emp.cardId}?fields=desc`);
+  const counters = parseDesc(card.desc);
+
+  // Increment the right counter
+  counters[statusKey] = (counters[statusKey] || 0) + 1;
+
+  // Write updated counters back to card description
+  await api(`/cards/${emp.cardId}`, 'PUT', { desc: buildDesc(counters) });
+
+  // Add a dated comment
+  await api(`/cards/${emp.cardId}/actions/comments`, 'POST', {
+    text: `${emp.name} — ${status.label} — ${DATE}`,
+  });
+
+  // Update in-memory counter so the UI reflects the new value immediately
+  emp.counters = { ...counters };
+}
+
+// ════════════════════════════════════════════════════════
+// Slack notification — receives finalSelections as param
+// to avoid any reliance on the global `selections` object
+// ════════════════════════════════════════════════════════
+async function sendSlack(finalSelections) {
+  const DATE    = today();
+  const present  = employees.filter(e => finalSelections[e.name] === 'P').map(e => e.name);
+  const late     = employees.filter(e => finalSelections[e.name] === 'L').map(e => e.name);
+  const absent   = employees.filter(e => finalSelections[e.name] === 'A').map(e => e.name);
+  const sick     = employees.filter(e => finalSelections[e.name] === 'S').map(e => e.name);
+  const vacation = employees.filter(e => finalSelections[e.name] === 'V').map(e => e.name);
+  const flagged  = employees.length - present.length;
+
+  const section = (emoji, label, names) =>
+    names.length
+      ? `${emoji} *${label}* (${names.length})\n${names.map(n => `• ${n}`).join('\n')}`
+      : null;
+
+  const lines = [
+    `📋 *Daily Attendance — ${DATE}*`,
+    `_${employees.length} employees · ${present.length} present · ${flagged} flagged_`,
+    '',
+  ];
+
+  if (flagged === 0) {
+    lines.push('🎉 All employees present today!');
+  } else {
+    [
+      section('🕐', 'Late',     late),
+      section('❌', 'Absent',   absent),
+      section('🤒', 'Sick',     sick),
+      section('🌴', 'Vacation', vacation),
+    ].filter(Boolean).forEach(s => { lines.push(s); lines.push(''); });
+  }
+
+  const webhookUrl = CFG.SLACK_WEBHOOK;
+  if (!webhookUrl || webhookUrl === 'SLACK_WEBHOOK_PLACEHOLDER') {
+    console.warn('Slack webhook not configured — skipping Slack notification.');
+    return;
+  }
+
+  const res = await fetch(webhookUrl, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ text: lines.join('\n') }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Slack returned ${res.status} — check webhook URL in GitHub Secrets.`);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// Summary screen (shown after submit)
+// ════════════════════════════════════════════════════════
+function showSummary(finalSelections) {
+  const sel      = finalSelections || selections;
   const DATE     = today();
-  const sel      = lastSubmitSelections;
-  const present  = employees.filter(e => sel[e.name]==='P').map(e=>e.name);
-  const late     = employees.filter(e => sel[e.name]==='L').map(e=>e.name);
-  const absent   = employees.filter(e => sel[e.name]==='A').map(e=>e.name);
-  const sick     = employees.filter(e => sel[e.name]==='S').map(e=>e.name);
-  const vacation = employees.filter(e => sel[e.name]==='V').map(e=>e.name);
+  const present  = employees.filter(e => sel[e.name] === 'P').map(e => e.name);
+  const late     = employees.filter(e => sel[e.name] === 'L').map(e => e.name);
+  const absent   = employees.filter(e => sel[e.name] === 'A').map(e => e.name);
+  const sick     = employees.filter(e => sel[e.name] === 'S').map(e => e.name);
+  const vacation = employees.filter(e => sel[e.name] === 'V').map(e => e.name);
 
   const section = (emoji, label, color, names) => {
     if (!names.length) return '';
@@ -649,16 +593,16 @@ function showSummary() {
         <span style="font-size:11px;color:var(--vacation)">✓ Submitted</span>
       </div>
     </div>
-
     <div class="summary-card">
       <div class="summary-header">
         <div>
           <div class="summary-header-title">✅ Attendance Submitted</div>
           <div class="summary-header-sub">Slack notified · ${employees.length} employees</div>
         </div>
-        <div style="font-size:22px;font-weight:700;color:#5b8dee">${present.length}<span style="font-size:11px;font-weight:400;color:var(--sub);margin-left:3px">present</span></div>
+        <div style="font-size:22px;font-weight:700;color:#5b8dee">
+          ${present.length}<span style="font-size:11px;font-weight:400;color:var(--sub);margin-left:3px">present</span>
+        </div>
       </div>
-
       ${late.length || absent.length || sick.length || vacation.length
         ? `${section('🕐','Late','#e6a817', late)}
            ${section('❌','Absent','#e54545', absent)}
@@ -668,54 +612,39 @@ function showSummary() {
              🎉 All ${employees.length} employees present today!
            </div>`
       }
-
       <div class="summary-footer">
         <span class="summary-footer-stat">${DATE}</span>
         <span class="summary-footer-stat">${present.length} present · ${employees.length - present.length} flagged</span>
       </div>
     </div>`;
 
-  if (t) t.sizeTo('#app').catch(()=>{});
+  if (t) t.sizeTo('#app').catch(() => {});
 }
 
-// reopenAttendance removed — submission is final
-
 // ════════════════════════════════════════════════════════
-//  Edit Mode — correct LASV counts on hidden board
+// Edit Mode — correct LASV counts on hidden board directly
 // ════════════════════════════════════════════════════════
 async function showEditMode() {
-  // Load current log cards so we show live counts
   document.getElementById('app').innerHTML = `
     <div class="hdr">
       <div class="hdr-left"><span class="hdr-title">Edit LASV Counts</span></div>
-      <div class="hdr-right">
-        <button class="btn-sm" onclick="showSummary()">← Back</button>
-      </div>
+      <div class="hdr-right"><button class="btn-sm" onclick="showSummary()">← Back</button></div>
     </div>
     <div class="state"><div class="spinner"></div>Loading current counts...</div>`;
-  if (t) t.sizeTo('#app').catch(()=>{});
+  if (t) t.sizeTo('#app').catch(() => {});
 
   try {
-    // Edit directly from 2026 Employee cards
-    const rows_data = employees.map(emp => ({
-      name: emp.name,
-      ctr:  emp.counters,
-      cid:  emp.cardId,
-    }));
-
-    const rows = rows_data.map(({name, ctr, cid}) => {
-      return `
-        <div class="edit-row">
-          <div class="edit-name">${name}</div>
-          <div class="edit-counters">
-            <div class="edit-field"><label>🕐</label><input class="edit-input" type="number" min="0" value="${ctr.L}" id="L_${cid}"></div>
-            <div class="edit-field"><label>❌</label><input class="edit-input" type="number" min="0" value="${ctr.A}" id="A_${cid}"></div>
-            <div class="edit-field"><label>🤒</label><input class="edit-input" type="number" min="0" value="${ctr.S}" id="S_${cid}"></div>
-            <div class="edit-field"><label>🌴</label><input class="edit-input" type="number" min="0" value="${ctr.V}" id="V_${cid}"></div>
-          </div>
-          <button class="btn-save-edit" onclick="saveEdit('${cid}','${name}')" id="savebtn_${cid}">Save</button>
-        </div>`;
-    }).join('');
+    const rows = employees.map(({ name, counters, cardId }) => `
+      <div class="edit-row">
+        <div class="edit-name">${name}</div>
+        <div class="edit-counters">
+          <div class="edit-field"><label>🕐</label><input class="edit-input" type="number" min="0" value="${counters.L}" id="L_${cardId}"></div>
+          <div class="edit-field"><label>❌</label><input class="edit-input" type="number" min="0" value="${counters.A}" id="A_${cardId}"></div>
+          <div class="edit-field"><label>🤒</label><input class="edit-input" type="number" min="0" value="${counters.S}" id="S_${cardId}"></div>
+          <div class="edit-field"><label>🌴</label><input class="edit-input" type="number" min="0" value="${counters.V}" id="V_${cardId}"></div>
+        </div>
+        <button class="btn-save-edit" onclick="saveEdit('${cardId}','${name.replace(/'/g,"\\'")} ')" id="savebtn_${cardId}">Save</button>
+      </div>`).join('');
 
     document.getElementById('app').innerHTML = `
       <div class="hdr">
@@ -723,12 +652,10 @@ async function showEditMode() {
           <span class="hdr-title">Edit LASV Counts</span>
           <span class="hdr-date">${year()}</span>
         </div>
-        <div class="hdr-right">
-          <button class="btn-sm" onclick="showSummary()">← Back</button>
-        </div>
+        <div class="hdr-right"><button class="btn-sm" onclick="showSummary()">← Back</button></div>
       </div>
       <div style="padding:6px 12px 4px;font-size:11px;color:var(--sub)">
-        Adjust counts per employee. Changes are saved to the hidden board immediately.
+        Adjust counts per employee. Saved directly to the hidden board.
       </div>
       <div class="edit-section">
         <div class="edit-header">
@@ -737,20 +664,18 @@ async function showEditMode() {
         </div>
         ${rows}
       </div>`;
-    if (t) t.sizeTo('#app').catch(()=>{});
-
+    if (t) t.sizeTo('#app').catch(() => {});
   } catch(e) {
     document.getElementById('app').innerHTML = `
       <div class="state error">⚠️ ${e.message}
         <br/><br/><button class="btn-sm" onclick="showSummary()">← Back</button>
       </div>`;
-    if (t) t.sizeTo('#app').catch(()=>{});
+    if (t) t.sizeTo('#app').catch(() => {});
   }
 }
 
 async function saveEdit(cardId, empName) {
-  const btnId = `savebtn_${cardId}`;
-  const btn   = document.getElementById(btnId);
+  const btn = document.getElementById(`savebtn_${cardId}`);
   if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
 
   try {
@@ -759,109 +684,38 @@ async function saveEdit(cardId, empName) {
     const S = parseInt(document.getElementById(`S_${cardId}`)?.value) || 0;
     const V = parseInt(document.getElementById(`V_${cardId}`)?.value) || 0;
 
-    // Write directly to the employee's card in 2026 Employee
-    await api(`/cards/${cardId}`,'PUT',{ desc: buildDesc({L,A,S,V}) });
+    await api(`/cards/${cardId}`, 'PUT', { desc: buildDesc({ L, A, S, V }) });
 
-    // Update local counter
-    const emp = employees.find(e => e.name === empName);
-    if (emp) emp.counters = {L,A,S,V};
+    // Update local cache
+    const emp = employees.find(e => e.cardId === cardId);
+    if (emp) emp.counters = { L, A, S, V };
 
-    if (btn) { btn.textContent = '✓ Saved'; btn.style.color = 'var(--vacation)'; btn.style.borderColor = 'var(--vacation)'; }
-    setTimeout(() => { if (btn) { btn.textContent = 'Save'; btn.disabled = false; btn.style.color=''; btn.style.borderColor=''; } }, 2000);
-
+    if (btn) {
+      btn.textContent = '✓ Saved';
+      btn.style.color = 'var(--vacation)';
+      btn.style.borderColor = 'var(--vacation)';
+    }
+    setTimeout(() => {
+      if (btn) { btn.textContent = 'Save'; btn.disabled = false; btn.style.color=''; btn.style.borderColor=''; }
+    }, 2000);
   } catch(e) {
     if (btn) { btn.textContent = '✗ Error'; btn.disabled = false; }
-    console.error(e);
+    console.error('saveEdit error:', e);
   }
 }
 
 // ════════════════════════════════════════════════════════
-//  Log helpers
+// UI state helpers
 // ════════════════════════════════════════════════════════
-// getOrCreateLogList removed — logging goes to 2026 Employee cards directly
-
-async function logEmployee(emp, statusKey) {
-  const DATE   = today();
-  const status = STATUS[statusKey];
-  const cardId = emp.cardId;
-
-  if (!cardId) throw new Error(`No card ID found for ${emp.name} — try refreshing.`);
-
-  // Fetch current description so we can update counters accurately
-  const card     = await api(`/cards/${cardId}?fields=desc`);
-  const counters = parseDesc(card.desc);
-  counters[statusKey] = (counters[statusKey] || 0) + 1;
-
-  // Write updated counters back to description
-  await api(`/cards/${cardId}`, 'PUT', { desc: buildDesc(counters) });
-
-  // Add dated comment entry
-  await api(`/cards/${cardId}/actions/comments`, 'POST', {
-    text: `${emp.name} — ${status.label} — ${DATE}`,
-  });
-
-  // Update in-memory counter so the UI reflects new value
-  emp.counters = { ...emp.counters, [statusKey]: counters[statusKey] };
-}
-
-function buildDesc(c) {
-  return `## LASV Summary\n\n| Late | Absent | Sick | Vacation |\n|------|--------|------|----------|\n| ${c.L||0} | ${c.A||0} | ${c.S||0} | ${c.V||0} |`;
-}
-
-function parseDesc(desc) {
-  const d = {L:0,A:0,S:0,V:0};
-  if (!desc) return d;
-  const m = desc.match(/\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|/);
-  if (m) { d.L=+m[1]; d.A=+m[2]; d.S=+m[3]; d.V=+m[4]; }
-  return d;
+function setState(type, msg) {
+  document.getElementById('app').innerHTML = type === 'loading'
+    ? `<div class="state"><div class="spinner"></div>${msg}</div>`
+    : `<div class="state error">⚠️ ${msg}<br/><br/><button class="btn-sm" onclick="boot()">↺ Retry</button></div>`;
+  if (t) t.sizeTo('#app').catch(() => {});
 }
 
 // ════════════════════════════════════════════════════════
-//  Slack
-// ════════════════════════════════════════════════════════
-async function sendSlack() {
-  const DATE     = today();
-  const present  = employees.filter(e => selections[e.name]==='P').map(e=>e.name);
-  const late     = employees.filter(e => selections[e.name]==='L').map(e=>e.name);
-  const absent   = employees.filter(e => selections[e.name]==='A').map(e=>e.name);
-  const sick     = employees.filter(e => selections[e.name]==='S').map(e=>e.name);
-  const vacation = employees.filter(e => selections[e.name]==='V').map(e=>e.name);
-  const flagged  = employees.length - present.length;
-
-  const section = (emoji, label, names) =>
-    names.length ? `${emoji} *${label}* (${names.length})\n${names.map(n=>`• ${n}`).join('\n')}` : null;
-
-  const lines = [
-    `📋 *Daily Attendance — ${DATE}*`,
-    `_${employees.length} employees · ${present.length} present · ${flagged} flagged_`,
-    '',
-  ];
-
-  if (flagged === 0) {
-    lines.push('🎉 All employees present today!');
-  } else {
-    [
-      section('🕐', 'Late',     late),
-      section('❌', 'Absent',   absent),
-      section('🤒', 'Sick',     sick),
-      section('🌴', 'Vacation', vacation),
-    ].filter(Boolean).forEach(s => { lines.push(s); lines.push(''); });
-  }
-
-  try {
-    const res = await fetch(CFG.SLACK_WEBHOOK, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ text: lines.join('\n') }),
-    });
-    if (!res.ok) console.warn('Slack responded:', res.status);
-  } catch(e) {
-    console.warn('Slack notification failed (non-critical):', e.message);
-  }
-}
-
-// ════════════════════════════════════════════════════════
-//  Auth screen
+// Auth screen
 // ════════════════════════════════════════════════════════
 function showAuth() {
   document.getElementById('app').innerHTML = `
@@ -877,35 +731,25 @@ function showAuth() {
       <button class="btn-sm primary" style="width:100%;padding:8px" onclick="saveToken()">Save Token</button>
       <div id="authMsg" style="font-size:11px;color:var(--absent);margin-top:6px;min-height:14px;font-family:monospace"></div>
     </div>`;
-  if (t) t.sizeTo('#app').catch(()=>{});
+  if (t) t.sizeTo('#app').catch(() => {});
 }
 
 async function saveToken() {
   const val = document.getElementById('tokenInput')?.value.trim();
   const msg = document.getElementById('authMsg');
-  if (!val) { if(msg) msg.textContent='Paste your token first.'; return; }
-  if (val.length < 40) { if(msg) msg.textContent='Token too short — copy the whole thing.'; return; }
+  if (!val) { if (msg) msg.textContent = 'Paste your token first.'; return; }
+  if (val.length < 40) { if (msg) msg.textContent = 'Token too short — copy the whole thing.'; return; }
   try {
-    await t.set('member','private','token', val);
+    await t.set('member', 'private', 'token', val);
     token = val;
     await boot();
   } catch(e) {
-    if(msg) msg.textContent = 'Error: ' + e.message;
+    if (msg) msg.textContent = 'Error: ' + e.message;
   }
 }
 
 // ════════════════════════════════════════════════════════
-//  UI state helpers
-// ════════════════════════════════════════════════════════
-function setState(type, msg) {
-  document.getElementById('app').innerHTML = type === 'loading'
-    ? `<div class="state"><div class="spinner"></div>${msg}</div>`
-    : `<div class="state error">⚠️ ${msg}<br/><br/><button class="btn-sm" onclick="boot()">↺ Retry</button></div>`;
-  if (t) t.sizeTo('#app').catch(()=>{});
-}
-
-// ════════════════════════════════════════════════════════
-//  Boot
+// Boot
 // ════════════════════════════════════════════════════════
 async function boot() {
   setState('loading', 'Initializing...');
@@ -916,15 +760,12 @@ async function boot() {
         appName: 'CF Daily Attendance',
       });
     }
-
-    token = await t.get('member','private','token');
+    token = await t.get('member', 'private', 'token');
     if (!token) { showAuth(); return; }
-
     await loadEmployees();
     render();
-
   } catch(e) {
-    console.error(e);
+    console.error('Boot error:', e);
     if (!token) { showAuth(); return; }
     setState('error', e.message);
   }
