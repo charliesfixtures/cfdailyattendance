@@ -548,10 +548,12 @@ async function sendSlack(finalSelections) {
     return;
   }
 
+  // NOTE: No Content-Type header — sending with application/json triggers a CORS
+  // preflight that Slack blocks from browser origins. Omitting the header sends it
+  // as a simple request which Slack accepts fine (still valid JSON in the body).
   const res = await fetch(webhookUrl, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ text: lines.join('\n') }),
+    method: 'POST',
+    body:   JSON.stringify({ text: lines.join('\n') }),
   });
 
   if (!res.ok) {
