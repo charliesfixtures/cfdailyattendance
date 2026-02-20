@@ -11,20 +11,30 @@
 
   TrelloPowerUp.initialize({
 
-    // ── Appears as a section inside every card ──────────────
+    // ── Card back section ────────────────────────────────────
+    // Only renders on cards whose name contains "Attendance"
     'card-back-section': function(t) {
-      return {
-        title: 'Daily Attendance',
-        icon:  BASE_URL + 'icon.svg',
-        content: {
-          type:   'iframe',
-          url:    t.signUrl(BASE_URL + 'index.html'),
-          height: 35,  // starts small, index.html calls sizeTo to expand
-        },
-      };
+      return t.card('name').then(function(card) {
+
+        // Check if card name contains "Attendance" (case-insensitive)
+        if (!card.name.toLowerCase().includes('attendance')) {
+          return null; // Return nothing — section hidden on all other cards
+        }
+
+        return {
+          title: 'Daily Attendance',
+          icon:  BASE_URL + 'icon.svg',
+          content: {
+            type:   'iframe',
+            url:    t.signUrl(BASE_URL + 'index.html'),
+            height: 35, // starts small, index.html sizeTo expands it
+          },
+        };
+
+      });
     },
 
-    // ── Board button (top bar) ───────────────────────────────
+    // ── Board toolbar button (optional quick access) ─────────
     'board-buttons': function(t) {
       return [{
         icon: { dark: BASE_URL + 'icon.svg', light: BASE_URL + 'icon.svg' },
