@@ -268,13 +268,32 @@ function setAuthScreen() {
       <div><div class="header-title">Daily Attendance</div><div class="header-date">${todayFormatted()}</div></div>
     </div>
     <div class="auth-box">
-      <p style="margin-bottom:10px">One-time setup required. Click below — it opens a setup page. Follow the 3 steps, then come back and click <strong>↺ Retry</strong>.</p>
-      <a href="https://charliesfixtures.github.io/cfdailyattendance/setup.html" target="_blank">
-        <button class="btn-submit" style="max-width:220px;margin-bottom:10px">🔐 Open Setup Page</button>
-      </a>
-      <br/>
-      <button class="btn-secondary" style="max-width:220px;margin-top:8px" onclick="init()">↺ Retry After Setup</button>
+      <p style="margin-bottom:12px;font-size:12px;line-height:1.7">
+        <strong>Step 1:</strong> Click the link below to get your token (opens new tab):<br/>
+        <a href="https://trello.com/1/authorize?expiration=never&scope=read,write&response_type=token&key=53abc1f4686798eadbeb8f91ea79c9bb&name=CF+Daily+Attendance" target="_blank" style="color:#4f8ef7">→ Get Trello Token</a>
+      </p>
+      <p style="margin-bottom:8px;font-size:12px"><strong>Step 2:</strong> Copy the token, paste it here:</p>
+      <textarea id="tokenPaste" style="width:100%;height:70px;padding:8px;border-radius:8px;border:1px solid #2a2d3e;background:#0f1117;color:#e2e8f0;font-family:monospace;font-size:11px;resize:none;margin-bottom:10px" placeholder="Paste token here (starts with ATTA...)"></textarea>
+      <button class="btn-submit" style="width:100%" onclick="saveTokenFromPaste()">💾 Save & Continue</button>
+      <div id="authMsg" style="font-size:11px;color:#ef4444;margin-top:8px;min-height:16px;font-family:monospace"></div>
     </div>`;
+}
+
+async function saveTokenFromPaste() {
+  const token = document.getElementById('tokenPaste').value.trim();
+  const msg   = document.getElementById('authMsg');
+  if (!token) { msg.textContent = 'Please paste your token first.'; return; }
+  if (token.length < 40) { msg.textContent = 'Token looks too short — copy the whole thing.'; return; }
+  msg.style.color = '#64748b';
+  msg.textContent = 'Saving...';
+  try {
+    await t.set('member', 'private', 'token', token);
+    trelloToken = token;
+    await init();
+  } catch(e) {
+    msg.style.color = '#ef4444';
+    msg.textContent = 'Error saving: ' + e.message;
+  }
 }
 
 function render() {
