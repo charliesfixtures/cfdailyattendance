@@ -575,13 +575,14 @@ async function postSummaryComment(finalSelections) {
 
   const lines = [
     '.',
+    ':check-black: *Morning Check* :check-black:',
     `📋 *Daily Attendance · ${DATE}*`,
     `${employees.length} employees · ✅ ${present.length} present · ${flagged} flagged`,
     '',
   ];
 
   if (flagged === 0) {
-    lines[2] = `🎉 All ${employees.length} employees present!`;
+    lines[3] = `🎉 All ${employees.length} employees present!`;
   } else {
     [
       section('🕐', 'Late',     late),
