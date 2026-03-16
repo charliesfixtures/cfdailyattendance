@@ -155,6 +155,28 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tex
 
 /* ── Divider ── */
 .emp-divider { height: 1px; background: var(--border); opacity: 0.4; margin: 0 8px 3px; }
+
+/* ── Dashboard (board bar read-only view) ── */
+.dash-section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--sub); padding: 10px 12px 4px; }
+.dash-perfect-label { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--vacation); padding: 10px 12px 4px; display: flex; align-items: center; gap: 5px; }
+.dash-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: var(--radius); margin: 0 8px 2px; transition: background 0.15s; }
+.dash-row:hover { background: var(--row-hover); }
+.dash-avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: var(--sub); overflow: hidden; border: 1.5px solid var(--border); }
+.dash-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dash-row.flagged .dash-avatar { border-color: var(--absent); }
+.dash-row.perfect .dash-avatar { border-color: var(--vacation); }
+.dash-name { font-size: 12px; font-weight: 500; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.dash-perfect .dash-name { color: var(--sub); }
+.dash-counters { display: flex; gap: 6px; align-items: center; flex-shrink: 0; font-size: 12px; }
+.dash-badge { font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 10px; }
+.dash-badge-L { background: color-mix(in srgb, var(--late) 15%, transparent); color: var(--late); }
+.dash-badge-A { background: color-mix(in srgb, var(--absent) 15%, transparent); color: var(--absent); }
+.dash-badge-S { background: color-mix(in srgb, var(--sick) 15%, transparent); color: var(--sick); }
+.dash-badge-V { background: color-mix(in srgb, var(--vacation) 15%, transparent); color: var(--vacation); }
+.dash-perfect-tag { font-size: 10px; color: var(--vacation); opacity: 0.6; }
+.dash-stats { display: flex; gap: 12px; padding: 8px 12px; border-top: 1px solid var(--border); margin-top: 6px; font-size: 11px; color: var(--sub); }
+.dash-stat { display: flex; align-items: center; gap: 4px; }
+.dash-stat-val { font-weight: 600; }
 </style>
 </head>
 <body>
@@ -792,10 +814,83 @@ async function saveToken() {
 }
 
 // ════════════════════════════════════════════════════════
-// Boot
+// Dashboard — read-only board bar view
 // ════════════════════════════════════════════════════════
-async function boot() {
-  setState('loading', 'Initializing...');
+function renderDashboard() {
+  const flagged = employees
+    .filter(e => (e.counters.L + e.counters.A + e.counters.S + e.counters.V) > 0)
+    .sort((a, b) => {
+      const totalA = a.counters.L + a.counters.A + a.counters.S + a.counters.V;
+      const totalB = b.counters.L + b.counters.A + b.counters.S + b.counters.V;
+      return totalB - totalA;
+    });
+  const perfect = employees
+    .filter(e => (e.counters.L + e.counters.A + e.counters.S + e.counters.V) === 0)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  function dashRow(emp, isPerfect) {
+    const initials = emp.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const avatarInner = emp.photo
+      ? `<img src="${emp.photo}" alt="${initials}" onerror="this.outerHTML='<span>${initials}</span>'">`
+      : `<span>${initials}</span>`;
+
+    const { L, A, S, V } = emp.counters;
+    let badges = '';
+    if (!isPerfect) {
+      badges = [
+        L ? `<span class="dash-badge dash-badge-L">🕐 ${L}</span>` : '',
+        A ? `<span class="dash-badge dash-badge-A">❌ ${A}</span>` : '',
+        S ? `<span class="dash-badge dash-badge-S">🤒 ${S}</span>` : '',
+        V ? `<span class="dash-badge dash-badge-V">🌴 ${V}</span>` : '',
+      ].filter(Boolean).join('');
+    } else {
+      badges = '<span class="dash-perfect-tag">🟢</span>';
+    }
+
+    return `
+      <div class="dash-row ${isPerfect ? 'perfect dash-perfect' : 'flagged'}">
+        <div class="dash-avatar">${avatarInner}</div>
+        <div class="dash-name">${emp.name}</div>
+        <div class="dash-counters">${badges}</div>
+      </div>`;
+  }
+
+  const teamL = employees.reduce((s, e) => s + e.counters.L, 0);
+  const teamA = employees.reduce((s, e) => s + e.counters.A, 0);
+  const teamS = employees.reduce((s, e) => s + e.counters.S, 0);
+  const teamV = employees.reduce((s, e) => s + e.counters.V, 0);
+
+  document.getElementById('app').innerHTML = `
+    <div class="hdr">
+      <div class="hdr-left">
+        <span class="hdr-title">LASV Summary</span>
+        <span class="hdr-date">${year()}</span>
+      </div>
+      <div class="hdr-right">
+        <button class="btn-sm" onclick="bootDashboard()" title="Refresh">↺</button>
+      </div>
+    </div>
+    ${flagged.length > 0
+      ? `<div class="dash-section-label">${flagged.length} Flagged</div>
+         ${flagged.map(e => dashRow(e, false)).join('')}`
+      : ''}
+    ${perfect.length > 0
+      ? `<div class="dash-perfect-label">🟢 Perfect Attendance (${perfect.length})</div>
+         ${perfect.map(e => dashRow(e, true)).join('')}`
+      : ''}
+    <div class="dash-stats">
+      <div class="dash-stat"><span class="dash-stat-val">${employees.length}</span> total</div>
+      ${teamL ? `<div class="dash-stat" style="color:var(--late)">🕐 <span class="dash-stat-val">${teamL}</span></div>` : ''}
+      ${teamA ? `<div class="dash-stat" style="color:var(--absent)">❌ <span class="dash-stat-val">${teamA}</span></div>` : ''}
+      ${teamS ? `<div class="dash-stat" style="color:var(--sick)">🤒 <span class="dash-stat-val">${teamS}</span></div>` : ''}
+      ${teamV ? `<div class="dash-stat" style="color:var(--vacation)">🌴 <span class="dash-stat-val">${teamV}</span></div>` : ''}
+    </div>`;
+
+  if (t) requestAnimationFrame(() => t.sizeTo('#app').catch(() => {}));
+}
+
+async function bootDashboard() {
+  setState('loading', 'Loading LASV summary...');
   try {
     if (!t) {
       t = window.TrelloPowerUp.iframe({
@@ -806,13 +901,55 @@ async function boot() {
     token = await t.get('member', 'private', 'token');
     if (!token) { showAuth(); return; }
     await loadEmployees();
+    renderDashboard();
+  } catch(e) {
+    console.error('Dashboard boot error:', e);
+    if (!token) { showAuth(); return; }
+    setState('error', e.message);
+  }
+}
 
-    // Check if attendance was already submitted today — show summary if so
+// ════════════════════════════════════════════════════════
+// Boot — auto-detects card-back vs board-bar context
+// ════════════════════════════════════════════════════════
+async function boot() {
+  setState('loading', 'Initializing...');
+  try {
+    if (!t) {
+      t = window.TrelloPowerUp.iframe({
+        appKey:  CFG.API_KEY,
+        appName: 'CF Daily Attendance',
+      });
+    }
+
+    // Detect context: if we're on a card, t.card('id') returns an id.
+    // If we're on the board bar, there's no card context.
+    let isCardContext = false;
+    try {
+      const cardInfo = await t.card('id');
+      isCardContext = !!(cardInfo && cardInfo.id);
+    } catch(e) {
+      isCardContext = false;
+    }
+
+    if (!isCardContext) {
+      // Board bar — show read-only dashboard
+      token = await t.get('member', 'private', 'token');
+      if (!token) { showAuth(); return; }
+      await loadEmployees();
+      renderDashboard();
+      return;
+    }
+
+    // Card back — normal attendance form flow
+    token = await t.get('member', 'private', 'token');
+    if (!token) { showAuth(); return; }
+    await loadEmployees();
+
     const savedKey = 'submitted_' + today();
     const savedState = await t.get('card', 'shared', savedKey);
     if (savedState && savedState.submitted) {
       submitted = true;
-      // Restore saved selections into memory
       Object.assign(selections, savedState.selections);
       showSummary(savedState.selections);
       return;
