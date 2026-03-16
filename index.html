@@ -19,6 +19,7 @@
   --late: #e6a817;
   --absent: #e54545;
   --sick: #9b59f5;
+  --cuttime: #f2994a;
   --vacation: #11c987;
   --radius: 8px;
   --dropdown-bg: #ffffff;
@@ -78,6 +79,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tex
 .emp-row.s-L::before { background: var(--late); }
 .emp-row.s-A::before { background: var(--absent); }
 .emp-row.s-S::before { background: var(--sick); }
+.emp-row.s-C::before { background: var(--cuttime); }
 .emp-row.s-V::before { background: var(--vacation); }
 
 /* Avatar */
@@ -86,28 +88,31 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tex
 .emp-row.s-L .emp-avatar { border-color: var(--late); }
 .emp-row.s-A .emp-avatar { border-color: var(--absent); }
 .emp-row.s-S .emp-avatar { border-color: var(--sick); }
+.emp-row.s-C .emp-avatar { border-color: var(--cuttime); }
 .emp-row.s-V .emp-avatar { border-color: var(--vacation); }
 
 /* Name */
 .emp-name { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
-/* LASV counters */
+/* LCASV counters */
 .emp-pipe { width: 1px; height: 14px; background: var(--pipe); margin: 0 6px 0 2px; flex-shrink: 0; }
 .emp-counters { display: flex; gap: 8px; align-items: center; flex-shrink: 0; font-size: 13px; color: var(--sub); white-space: nowrap; }
 .ctr { display: flex; align-items: center; gap: 3px; font-size: 13px; }
 .ctr-val { font-weight: 600; font-size: 12px; }
 .ctr-L .ctr-val { color: var(--late); }
 .ctr-A .ctr-val { color: var(--absent); }
+.ctr-C .ctr-val { color: var(--cuttime); }
 .ctr-S .ctr-val { color: var(--sick); }
 .ctr-V .ctr-val { color: var(--vacation); }
 
 /* Dropdown */
 .emp-dropdown { flex-shrink: 0; position: relative; }
-.status-select { appearance: none; -webkit-appearance: none; padding: 4px 22px 4px 9px; border-radius: 20px; border: 1px solid var(--border); background: var(--dropdown-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237880a0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 7px center; color: var(--present); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.15s; min-width: 82px; }
+.status-select { appearance: none; -webkit-appearance: none; padding: 4px 22px 4px 9px; border-radius: 20px; border: 1px solid var(--border); background: var(--dropdown-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237880a0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 7px center; color: var(--present); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.15s; min-width: 90px; }
 .status-select:focus { outline: none; border-color: #5b8dee; }
 .status-select.v-P { color: var(--present); border-color: var(--border); }
 .status-select.v-L { color: var(--late); border-color: var(--late); background-color: color-mix(in srgb, var(--late) 12%, var(--dropdown-bg)); }
 .status-select.v-A { color: var(--absent); border-color: var(--absent); background-color: color-mix(in srgb, var(--absent) 12%, var(--dropdown-bg)); }
+.status-select.v-C { color: var(--cuttime); border-color: var(--cuttime); background-color: color-mix(in srgb, var(--cuttime) 12%, var(--dropdown-bg)); }
 .status-select.v-S { color: var(--sick); border-color: var(--sick); background-color: color-mix(in srgb, var(--sick) 12%, var(--dropdown-bg)); }
 .status-select.v-V { color: var(--vacation); border-color: var(--vacation); background-color: color-mix(in srgb, var(--vacation) 12%, var(--dropdown-bg)); }
 
@@ -171,6 +176,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tex
 .dash-badge { font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 10px; }
 .dash-badge-L { background: color-mix(in srgb, var(--late) 15%, transparent); color: var(--late); }
 .dash-badge-A { background: color-mix(in srgb, var(--absent) 15%, transparent); color: var(--absent); }
+.dash-badge-C { background: color-mix(in srgb, var(--cuttime) 15%, transparent); color: var(--cuttime); }
 .dash-badge-S { background: color-mix(in srgb, var(--sick) 15%, transparent); color: var(--sick); }
 .dash-badge-V { background: color-mix(in srgb, var(--vacation) 15%, transparent); color: var(--vacation); }
 .dash-perfect-tag { font-size: 10px; color: var(--vacation); opacity: 0.6; }
@@ -195,6 +201,7 @@ const CFG = {
 const STATUS = {
   P: { label: 'Present',  emoji: '',   color: 'var(--present)' },
   L: { label: 'Late',     emoji: '🕐', color: 'var(--late)'    },
+  C: { label: 'Cut Time', emoji: '✂️', color: 'var(--cuttime)' },
   A: { label: 'Absent',   emoji: '❌', color: 'var(--absent)'  },
   S: { label: 'Sick',     emoji: '🤒', color: 'var(--sick)'    },
   V: { label: 'Vacation', emoji: '🌴', color: 'var(--vacation)'},
@@ -268,18 +275,20 @@ async function loadEmployees() {
 }
 
 // ════════════════════════════════════════════════════════
-// LASV description helpers
+// LCASV description helpers
 // ════════════════════════════════════════════════════════
 function parseDesc(desc) {
-  const d = { L: 0, A: 0, S: 0, V: 0 };
+  const d = { L: 0, C: 0, A: 0, S: 0, V: 0 };
   if (!desc) return d;
   // Try new emoji line format first: "🕐 Late: 2"
   const lm = desc.match(/Late:\s*(\d+)/);
+  const cm = desc.match(/Cut Time:\s*(\d+)/);
   const am = desc.match(/Absent:\s*(\d+)/);
   const sm = desc.match(/Sick:\s*(\d+)/);
   const vm = desc.match(/Vacation:\s*(\d+)/);
-  if (lm || am || sm || vm) {
+  if (lm || cm || am || sm || vm) {
     d.L = lm ? +lm[1] : 0;
+    d.C = cm ? +cm[1] : 0;
     d.A = am ? +am[1] : 0;
     d.S = sm ? +sm[1] : 0;
     d.V = vm ? +vm[1] : 0;
@@ -292,11 +301,11 @@ function parseDesc(desc) {
 }
 
 function buildDesc(c) {
-  const L = c.L || 0, A = c.A || 0, S = c.S || 0, V = c.V || 0;
-  const total = L + A + S + V;
+  const L = c.L || 0, C = c.C || 0, A = c.A || 0, S = c.S || 0, V = c.V || 0;
+  const total = L + C + A + S + V;
   const bar = total === 0 ? '🟢 Perfect attendance'
-    : [L ? `🕐 ×${L}` : '', A ? `❌ ×${A}` : '', S ? `🤒 ×${S}` : '', V ? `🌴 ×${V}` : ''].filter(Boolean).join('  ');
-  return `## LASV Summary\n\n🕐 Late: ${L}\n❌ Absent: ${A}\n🤒 Sick: ${S}\n🌴 Vacation: ${V}\n\n---\n${bar}`;
+    : [L ? `🕐 ×${L}` : '', C ? `✂️ ×${C}` : '', A ? `❌ ×${A}` : '', S ? `🤒 ×${S}` : '', V ? `🌴 ×${V}` : ''].filter(Boolean).join('  ');
+  return `## LCASV Summary\n\n🕐 Late: ${L}\n✂️ Cut Time: ${C}\n❌ Absent: ${A}\n🤒 Sick: ${S}\n🌴 Vacation: ${V}\n\n---\n${bar}`;
 }
 
 // ════════════════════════════════════════════════════════
@@ -323,7 +332,7 @@ function sanitizeName(name) {
 // ════════════════════════════════════════════════════════
 function render() {
   const DATE   = today();
-  const counts = { P:0, L:0, A:0, S:0, V:0 };
+  const counts = { P:0, L:0, C:0, A:0, S:0, V:0 };
   employees.forEach(e => counts[selections[e.name]]++);
 
   const rows = employees.map((emp, i) => {
@@ -333,9 +342,10 @@ function render() {
       ? `<img src="${emp.photo}" alt="${initials}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.outerHTML='<span>${initials}</span>'">`
       : `<span>${initials}</span>`;
 
-    const { L, A, S, V } = emp.counters;
+    const { L, C, A, S, V } = emp.counters;
     const ctrItems = [
       L ? `<span class="ctr ctr-L">🕐 <span class="ctr-val">${L}</span></span>` : '',
+      C ? `<span class="ctr ctr-C">✂️ <span class="ctr-val">${C}</span></span>` : '',
       A ? `<span class="ctr ctr-A">❌ <span class="ctr-val">${A}</span></span>` : '',
       S ? `<span class="ctr ctr-S">🤒 <span class="ctr-val">${S}</span></span>` : '',
       V ? `<span class="ctr ctr-V">🌴 <span class="ctr-val">${V}</span></span>` : '',
@@ -358,6 +368,7 @@ function render() {
             ${submitted ? 'disabled' : ''}>
             <option value="P"${sel==='P'?' selected':''}>Present</option>
             <option value="L"${sel==='L'?' selected':''}>Late</option>
+            <option value="C"${sel==='C'?' selected':''}>Cut Time</option>
             <option value="A"${sel==='A'?' selected':''}>Absent</option>
             <option value="S"${sel==='S'?' selected':''}>Sick</option>
             <option value="V"${sel==='V'?' selected':''}>Vacation</option>
@@ -387,6 +398,7 @@ function render() {
       <div class="footer-counts" id="footerCounts">
         <span class="fc"><span class="fc-dot" style="background:#5b8dee"></span>${counts.P}</span>
         ${counts.L ? `<span class="fc" style="color:var(--late)">🕐 ${counts.L}</span>` : ''}
+        ${counts.C ? `<span class="fc" style="color:var(--cuttime)">✂️ ${counts.C}</span>` : ''}
         ${counts.A ? `<span class="fc" style="color:var(--absent)">❌ ${counts.A}</span>` : ''}
         ${counts.S ? `<span class="fc" style="color:var(--sick)">🤒 ${counts.S}</span>` : ''}
         ${counts.V ? `<span class="fc" style="color:var(--vacation)">🌴 ${counts.V}</span>` : ''}
@@ -428,7 +440,7 @@ function setStatus(name, val, selectEl) {
 function updateFooterCounts() {
   // Read live from DOM to get accurate counts
   const current = readSelectionsFromDOM();
-  const counts  = { P:0, L:0, A:0, S:0, V:0 };
+  const counts  = { P:0, L:0, C:0, A:0, S:0, V:0 };
   employees.forEach(e => counts[current[e.name]]++);
 
   const fc = document.getElementById('footerCounts');
@@ -436,6 +448,7 @@ function updateFooterCounts() {
   fc.innerHTML = `
     <span class="fc"><span class="fc-dot" style="background:#5b8dee"></span>${counts.P}</span>
     ${counts.L ? `<span class="fc" style="color:var(--late)">🕐 ${counts.L}</span>` : ''}
+    ${counts.C ? `<span class="fc" style="color:var(--cuttime)">✂️ ${counts.C}</span>` : ''}
     ${counts.A ? `<span class="fc" style="color:var(--absent)">❌ ${counts.A}</span>` : ''}
     ${counts.S ? `<span class="fc" style="color:var(--sick)">🤒 ${counts.S}</span>` : ''}
     ${counts.V ? `<span class="fc" style="color:var(--vacation)">🌴 ${counts.V}</span>` : ''}`;
@@ -583,6 +596,7 @@ async function postSummaryComment(finalSelections) {
   const DATE     = today();
   const present  = employees.filter(e => finalSelections[e.name] === 'P').map(e => e.name);
   const late     = employees.filter(e => finalSelections[e.name] === 'L').map(e => e.name);
+  const cuttime  = employees.filter(e => finalSelections[e.name] === 'C').map(e => e.name);
   const absent   = employees.filter(e => finalSelections[e.name] === 'A').map(e => e.name);
   const sick     = employees.filter(e => finalSelections[e.name] === 'S').map(e => e.name);
   const vacation = employees.filter(e => finalSelections[e.name] === 'V').map(e => e.name);
@@ -608,6 +622,7 @@ async function postSummaryComment(finalSelections) {
   } else {
     [
       section('🕐', 'Late',     late),
+      section('✂️', 'Cut Time', cuttime),
       section('❌', 'Absent',   absent),
       section('🤒', 'Sick',     sick),
       section('🌴', 'Vacation', vacation),
@@ -632,6 +647,7 @@ function showSummary(finalSelections) {
   const DATE     = today();
   const present  = employees.filter(e => sel[e.name] === 'P').map(e => e.name);
   const late     = employees.filter(e => sel[e.name] === 'L').map(e => e.name);
+  const cuttime  = employees.filter(e => sel[e.name] === 'C').map(e => e.name);
   const absent   = employees.filter(e => sel[e.name] === 'A').map(e => e.name);
   const sick     = employees.filter(e => sel[e.name] === 'S').map(e => e.name);
   const vacation = employees.filter(e => sel[e.name] === 'V').map(e => e.name);
@@ -668,8 +684,9 @@ function showSummary(finalSelections) {
           ${present.length}<span style="font-size:11px;font-weight:400;color:var(--sub);margin-left:3px">present</span>
         </div>
       </div>
-      ${late.length || absent.length || sick.length || vacation.length
+      ${late.length || cuttime.length || absent.length || sick.length || vacation.length
         ? `${section('🕐','Late','#e6a817', late)}
+           ${section('✂️','Cut Time','#f0820d', cuttime)}
            ${section('❌','Absent','#e54545', absent)}
            ${section('🤒','Sick','#9b59f5', sick)}
            ${section('🌴','Vacation','#11c987', vacation)}`
@@ -687,12 +704,12 @@ function showSummary(finalSelections) {
 }
 
 // ════════════════════════════════════════════════════════
-// Edit Mode — correct LASV counts on hidden board directly
+// Edit Mode — correct LCASV counts on hidden board directly
 // ════════════════════════════════════════════════════════
 async function showEditMode() {
   document.getElementById('app').innerHTML = `
     <div class="hdr">
-      <div class="hdr-left"><span class="hdr-title">Edit LASV Counts</span></div>
+      <div class="hdr-left"><span class="hdr-title">Edit LCASV Counts</span></div>
       <div class="hdr-right"><button class="btn-sm" onclick="showSummary()">← Back</button></div>
     </div>
     <div class="state"><div class="spinner"></div>Loading current counts...</div>`;
@@ -704,6 +721,7 @@ async function showEditMode() {
         <div class="edit-name">${name}</div>
         <div class="edit-counters">
           <div class="edit-field"><label>🕐</label><input class="edit-input" type="number" min="0" value="${counters.L}" id="L_${cardId}"></div>
+          <div class="edit-field"><label>✂️</label><input class="edit-input" type="number" min="0" value="${counters.C}" id="C_${cardId}"></div>
           <div class="edit-field"><label>❌</label><input class="edit-input" type="number" min="0" value="${counters.A}" id="A_${cardId}"></div>
           <div class="edit-field"><label>🤒</label><input class="edit-input" type="number" min="0" value="${counters.S}" id="S_${cardId}"></div>
           <div class="edit-field"><label>🌴</label><input class="edit-input" type="number" min="0" value="${counters.V}" id="V_${cardId}"></div>
@@ -714,7 +732,7 @@ async function showEditMode() {
     document.getElementById('app').innerHTML = `
       <div class="hdr">
         <div class="hdr-left">
-          <span class="hdr-title">Edit LASV Counts</span>
+          <span class="hdr-title">Edit LCASV Counts</span>
           <span class="hdr-date">${year()}</span>
         </div>
         <div class="hdr-right"><button class="btn-sm" onclick="showSummary()">← Back</button></div>
@@ -725,7 +743,7 @@ async function showEditMode() {
       <div class="edit-section">
         <div class="edit-header">
           <span>Employee</span>
-          <span style="display:flex;gap:20px;font-size:10px">🕐 &nbsp;❌ &nbsp;🤒 &nbsp;🌴</span>
+          <span style="display:flex;gap:20px;font-size:10px">🕐 &nbsp;✂️ &nbsp;❌ &nbsp;🤒 &nbsp;🌴</span>
         </div>
         ${rows}
       </div>`;
@@ -745,15 +763,16 @@ async function saveEdit(cardId, empName) {
 
   try {
     const L = parseInt(document.getElementById(`L_${cardId}`)?.value) || 0;
+    const C = parseInt(document.getElementById(`C_${cardId}`)?.value) || 0;
     const A = parseInt(document.getElementById(`A_${cardId}`)?.value) || 0;
     const S = parseInt(document.getElementById(`S_${cardId}`)?.value) || 0;
     const V = parseInt(document.getElementById(`V_${cardId}`)?.value) || 0;
 
-    await api(`/cards/${cardId}`, 'PUT', { desc: buildDesc({ L, A, S, V }) });
+    await api(`/cards/${cardId}`, 'PUT', { desc: buildDesc({ L, C, A, S, V }) });
 
     // Update local cache
     const emp = employees.find(e => e.cardId === cardId);
-    if (emp) emp.counters = { L, A, S, V };
+    if (emp) emp.counters = { L, C, A, S, V };
 
     if (btn) {
       btn.textContent = '✓ Saved';
@@ -818,14 +837,14 @@ async function saveToken() {
 // ════════════════════════════════════════════════════════
 function renderDashboard() {
   const flagged = employees
-    .filter(e => (e.counters.L + e.counters.A + e.counters.S + e.counters.V) > 0)
+    .filter(e => (e.counters.L + e.counters.C + e.counters.A + e.counters.S + e.counters.V) > 0)
     .sort((a, b) => {
-      const totalA = a.counters.L + a.counters.A + a.counters.S + a.counters.V;
-      const totalB = b.counters.L + b.counters.A + b.counters.S + b.counters.V;
+      const totalA = a.counters.L + a.counters.C + a.counters.A + a.counters.S + a.counters.V;
+      const totalB = b.counters.L + b.counters.C + b.counters.A + b.counters.S + b.counters.V;
       return totalB - totalA;
     });
   const perfect = employees
-    .filter(e => (e.counters.L + e.counters.A + e.counters.S + e.counters.V) === 0)
+    .filter(e => (e.counters.L + e.counters.C + e.counters.A + e.counters.S + e.counters.V) === 0)
     .sort((a, b) => a.name.localeCompare(b.name));
 
   function dashRow(emp, isPerfect) {
@@ -834,11 +853,12 @@ function renderDashboard() {
       ? `<img src="${emp.photo}" alt="${initials}" onerror="this.outerHTML='<span>${initials}</span>'">`
       : `<span>${initials}</span>`;
 
-    const { L, A, S, V } = emp.counters;
+    const { L, C, A, S, V } = emp.counters;
     let badges = '';
     if (!isPerfect) {
       badges = [
         L ? `<span class="dash-badge dash-badge-L">🕐 ${L}</span>` : '',
+        C ? `<span class="dash-badge dash-badge-C">✂️ ${C}</span>` : '',
         A ? `<span class="dash-badge dash-badge-A">❌ ${A}</span>` : '',
         S ? `<span class="dash-badge dash-badge-S">🤒 ${S}</span>` : '',
         V ? `<span class="dash-badge dash-badge-V">🌴 ${V}</span>` : '',
@@ -856,6 +876,7 @@ function renderDashboard() {
   }
 
   const teamL = employees.reduce((s, e) => s + e.counters.L, 0);
+  const teamC = employees.reduce((s, e) => s + e.counters.C, 0);
   const teamA = employees.reduce((s, e) => s + e.counters.A, 0);
   const teamS = employees.reduce((s, e) => s + e.counters.S, 0);
   const teamV = employees.reduce((s, e) => s + e.counters.V, 0);
@@ -863,7 +884,7 @@ function renderDashboard() {
   document.getElementById('app').innerHTML = `
     <div class="hdr">
       <div class="hdr-left">
-        <span class="hdr-title">LASV Summary</span>
+        <span class="hdr-title">LCASV Summary</span>
         <span class="hdr-date">${year()}</span>
       </div>
       <div class="hdr-right">
@@ -881,6 +902,7 @@ function renderDashboard() {
     <div class="dash-stats">
       <div class="dash-stat"><span class="dash-stat-val">${employees.length}</span> total</div>
       ${teamL ? `<div class="dash-stat" style="color:var(--late)">🕐 <span class="dash-stat-val">${teamL}</span></div>` : ''}
+      ${teamC ? `<div class="dash-stat" style="color:var(--cuttime)">✂️ <span class="dash-stat-val">${teamC}</span></div>` : ''}
       ${teamA ? `<div class="dash-stat" style="color:var(--absent)">❌ <span class="dash-stat-val">${teamA}</span></div>` : ''}
       ${teamS ? `<div class="dash-stat" style="color:var(--sick)">🤒 <span class="dash-stat-val">${teamS}</span></div>` : ''}
       ${teamV ? `<div class="dash-stat" style="color:var(--vacation)">🌴 <span class="dash-stat-val">${teamV}</span></div>` : ''}
@@ -890,7 +912,7 @@ function renderDashboard() {
 }
 
 async function bootDashboard() {
-  setState('loading', 'Loading LASV summary...');
+  setState('loading', 'Loading LCASV summary...');
   try {
     if (!t) {
       t = window.TrelloPowerUp.iframe({
