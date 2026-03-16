@@ -1,18 +1,14 @@
-name: Yearly LASV Reset
-
+name: Yearly LCASV Reset
 on:
   schedule:
     # Runs at 12:01 AM PST on January 1st every year
     # PST = UTC-8, so 12:01am PST = 08:01am UTC Jan 1
     - cron: '1 8 1 1 *'
-
   # Allows manual trigger from GitHub Actions tab for testing
   workflow_dispatch:
-
 jobs:
   reset:
     runs-on: ubuntu-latest
-
     steps:
       - name: Reset all Employee card descriptions and comments
         env:
@@ -23,50 +19,39 @@ jobs:
         run: |
           python3 << 'PYEOF'
           import json, urllib.request, urllib.parse, os
-
           api_key       = os.environ['TRELLO_API_KEY']
           token         = os.environ['TRELLO_TOKEN']
           board_id      = os.environ['TRELLO_BOARD_ID']
           emp_list_name = os.environ['EMP_LIST_NAME'].strip().lower()
           base          = 'https://api.trello.com/1'
           auth          = f'key={api_key}&token={token}'
-          new_desc      = '## LASV Summary\n\n\U0001f550 Late: 0\n\u274c Absent: 0\n\U0001f922 Sick: 0\n\U0001f334 Vacation: 0\n\n---\n\U0001f7e2 Perfect attendance'
-
-          print('\U0001f504 Starting yearly LASV reset...')
-
+          new_desc      = '## LCASV Summary\n\n\U0001f550 Late: 0\n\u2702\ufe0f Cut Time: 0\n\u274c Absent: 0\n\U0001f922 Sick: 0\n\U0001f334 Vacation: 0\n\n---\n\U0001f7e2 Perfect attendance'
+          print('\U0001f504 Starting yearly LCASV reset...')
           # Get all lists on the board
           lists = json.loads(urllib.request.urlopen(f'{base}/boards/{board_id}/lists?{auth}').read())
-
           # Find the Employee list
           emp_list = next((l for l in lists if l['name'].strip().lower() == emp_list_name), None)
           if not emp_list:
             print(f'\u274c Could not find list named "{emp_list_name}" — aborting.')
             exit(1)
           print(f'\u2705 Found Employee list: {emp_list["id"]}')
-
           # Get all cards
           cards = json.loads(urllib.request.urlopen(f'{base}/lists/{emp_list["id"]}/cards?fields=id,name&{auth}').read())
           print(f'\U0001f4cb Found {len(cards)} employee cards to reset')
-
           for card in cards:
             cid  = card['id']
             name = card['name']
-
             # Zero out description
             data = urllib.parse.urlencode({'desc': new_desc}).encode()
             req  = urllib.request.Request(f'{base}/cards/{cid}?{auth}', data=data, method='PUT')
             req.add_header('Content-Type', 'application/x-www-form-urlencoded')
             urllib.request.urlopen(req)
-
             # Get and delete all comments
             actions = json.loads(urllib.request.urlopen(f'{base}/cards/{cid}/actions?filter=commentCard&limit=1000&{auth}').read())
             for action in actions:
               urllib.request.urlopen(urllib.request.Request(f'{base}/actions/{action["id"]}?{auth}', method='DELETE'))
-
             print(f'  \u2705 Reset {name} ({len(actions)} comments deleted)')
-
           print(f'\n\U0001f389 All {len(cards)} employee cards reset for the new year!')
-          'PYEOF'
-
+          PYEOF
       - name: Done
-        run: echo "✅ Yearly reset complete. Happy New Year! 🎉"
+        run: echo "✅ Yearly LCASV reset complete. Happy New Year! 🎉"
